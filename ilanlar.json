@@ -1,0 +1,25 @@
+{
+  "ilanlar": [
+    {
+      "id": 1,
+      "baslik": "Satılık Araba",
+      "aciklama": "2015 model, az kullanılmış",
+      "fiyat": 150000,
+      "platformlar": ["Sahibinden", "Arabam.com"]
+    },
+    {
+      "id": 2,
+      "baslik": "Kiralık Daire",
+      "aciklama": "Merkezi konumda 2+1 daire",
+      "fiyat": 8000,
+      "platformlar": ["Sahibinden", "Hepsiemlak"]
+    },
+    {
+      "id": 3,
+      "baslik": "İkinci El Telefon",
+      "aciklama": "iPhone 12, kutulu",
+      "fiyat": 15000,
+      "platformlar": ["Letgo", "Sahibinden"]
+    }
+  ]
+}
