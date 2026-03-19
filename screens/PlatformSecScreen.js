@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { addIlan } from '../api';
 
 const PLATFORMLAR = ['Sahibinden', 'Arabam.com', 'Letgo', 'Hepsiemlak'];
 
 export default function PlatformSecScreen({ navigation, route }) {
   const [secilenler, setSecilenler] = useState([]);
-  const { yeniIlan, setIlanlar, ilanlar } = route.params;
+  const { yeniIlan } = route.params;
 
   const platformSec = (platform) => {
     if (secilenler.includes(platform)) {
@@ -15,15 +16,20 @@ export default function PlatformSecScreen({ navigation, route }) {
     }
   };
 
-  const yayinla = () => {
+  const yayinla = async () => {
     if (secilenler.length === 0) {
       Alert.alert('Hata', 'En az bir platform seçin!');
       return;
     }
-    const yeniId = String(Date.now());
-    const tamamlananIlan = { ...yeniIlan, id: yeniId, platformlar: secilenler };
-    setIlanlar([...ilanlar, tamamlananIlan]);
-    navigation.navigate('Yayinla', { ilan: tamamlananIlan });
+    try {
+      const tamamlananIlan = { ...yeniIlan, platformlar: secilenler };
+      await addIlan(tamamlananIlan);
+      navigation.navigate('Yayinla', { ilan: tamamlananIlan });
+    } catch (error) {
+      // Backend yoksa simülasyon modunda devam et
+      const tamamlananIlan = { ...yeniIlan, platformlar: secilenler };
+      navigation.navigate('Yayinla', { ilan: tamamlananIlan });
+    }
   };
 
   return (
