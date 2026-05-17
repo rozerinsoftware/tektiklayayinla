@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
-import { addIlan } from '../api';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 
 const KATEGORILER = [
   { isim: 'Emlak', emoji: '🏠', renk: '#00B894' },
@@ -44,69 +53,121 @@ export default function IlanEkleScreen({ navigation }) {
     setEkstraAlanlar(prev => ({ ...prev, [key]: value }));
   };
 
+  const parseFiyatTl = (raw) => {
+    let s = String(raw ?? '').trim().replace(/\s/g, '');
+    if (!s) return NaN;
+    const lastComma = s.lastIndexOf(',');
+    const lastDot = s.lastIndexOf('.');
+    let normalized;
+    if (lastComma > lastDot) {
+      normalized = s.replace(/\./g, '').replace(',', '.');
+    } else {
+      normalized = s.replace(/,/g, '');
+    }
+    const n = Number(normalized);
+    return Number.isFinite(n) ? n : NaN;
+  };
+
   const devamEt = () => {
-    if (!kategori || !baslik || !aciklama || !fiyat) {
+    if (!kategori || !baslik.trim() || !aciklama.trim() || !String(fiyat).trim()) {
       Alert.alert('Hata', 'Lütfen tüm zorunlu alanları doldurun!');
       return;
     }
+    const fiyatSayi = parseFiyatTl(fiyat);
+    if (!Number.isFinite(fiyatSayi) || fiyatSayi <= 0) {
+      Alert.alert('Hata', 'Fiyat geçerli bir pozitif sayı olmalı (örn: 15000 veya 1.500.000).');
+      return;
+    }
+    if (fiyatSayi < 10) {
+      Alert.alert('Hata', 'Fiyat en az 10 TL olmalı.');
+      return;
+    }
+    if (fiyatSayi > 10_000_000_000) {
+      Alert.alert('Hata', 'Fiyat çok büyük; kontrol edip tekrar girin.');
+      return;
+    }
+    const fiyatMetin = String(Math.round(fiyatSayi));
     navigation.navigate('PlatformSec', {
-      yeniIlan: { baslik, aciklama, fiyat, kategori, ...ekstraAlanlar },
+      yeniIlan: { baslik: baslik.trim(), aciklama: aciklama.trim(), fiyat: fiyatMetin, kategori, ...ekstraAlanlar },
     });
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.baslik}>Kategori Seçin</Text>
-      <View style={styles.kategoriSatir}>
-        {KATEGORILER.map((k) => (
-          <TouchableOpacity
-            key={k.isim}
-            style={[styles.kategoriKart, kategori === k.isim && { borderColor: k.renk, borderWidth: 2 }]}
-            onPress={() => setKategori(k.isim)}
-          >
-            <Text style={styles.kategoriEmoji}>{k.emoji}</Text>
-            <Text style={styles.kategoriIsim}>{k.isim}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+    >
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
+          <Text style={styles.baslik}>Kategori Seçin</Text>
+          <View style={styles.kategoriSatir}>
+            {KATEGORILER.map((k) => (
+              <TouchableOpacity
+                key={k.isim}
+                style={[styles.kategoriKart, kategori === k.isim && { borderColor: k.renk, borderWidth: 2 }]}
+                onPress={() => setKategori(k.isim)}
+              >
+                <Text style={styles.kategoriEmoji}>{k.emoji}</Text>
+                <Text style={styles.kategoriIsim}>{k.isim}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-      {kategori && (
-        <>
-          <Text style={styles.baslik}>İlan Bilgileri</Text>
-          
-          <Text style={styles.label}>İlan Başlığı *</Text>
-          <TextInput style={styles.input} placeholder="Örn: Satılık Daire" value={baslik} onChangeText={setBaslik} />
-          
-          <Text style={styles.label}>Açıklama *</Text>
-          <TextInput style={[styles.input, styles.textarea]} placeholder="İlanınızı açıklayın" value={aciklama} onChangeText={setAciklama} multiline />
-          
-          <Text style={styles.label}>Fiyat (TL) *</Text>
-          <TextInput style={styles.input} placeholder="Örn: 15000" value={fiyat} onChangeText={setFiyat} keyboardType="numeric" />
+          {kategori && (
+            <>
+              <Text style={styles.baslik}>İlan Bilgileri</Text>
 
-          {KATEGORI_ALANLARI[kategori].map((alan) => (
-            <View key={alan.key}>
-              <Text style={styles.label}>{alan.label}</Text>
+              <Text style={styles.label}>İlan Başlığı *</Text>
+              <TextInput style={styles.input} placeholder="Örn: Satılık Daire" value={baslik} onChangeText={setBaslik} />
+
+              <Text style={styles.label}>Açıklama *</Text>
+              <TextInput
+                style={[styles.input, styles.textarea]}
+                placeholder="İlanınızı açıklayın"
+                value={aciklama}
+                onChangeText={setAciklama}
+                multiline
+              />
+
+              <Text style={styles.label}>Fiyat (TL) *</Text>
               <TextInput
                 style={styles.input}
-                placeholder={alan.placeholder}
-                value={ekstraAlanlar[alan.key] || ''}
-                onChangeText={(val) => ekstraGuncelle(alan.key, val)}
-                keyboardType={alan.keyboard || 'default'}
+                placeholder="Örn: 15000"
+                value={fiyat}
+                onChangeText={setFiyat}
+                keyboardType="numeric"
               />
-            </View>
-          ))}
 
-          <TouchableOpacity style={styles.buton} onPress={devamEt}>
-            <Text style={styles.butonText}>Devam Et →</Text>
-          </TouchableOpacity>
-        </>
-      )}
-    </ScrollView>
+              {KATEGORI_ALANLARI[kategori].map((alan) => (
+                <View key={alan.key}>
+                  <Text style={styles.label}>{alan.label}</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder={alan.placeholder}
+                    value={ekstraAlanlar[alan.key] || ''}
+                    onChangeText={(val) => ekstraGuncelle(alan.key, val)}
+                    keyboardType={alan.keyboard || 'default'}
+                  />
+                </View>
+              ))}
+
+              <TouchableOpacity style={styles.buton} onPress={devamEt}>
+                <Text style={styles.butonText}>Devam Et →</Text>
+              </TouchableOpacity>
+            </>
+          )}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 20 },
+  container: { flex: 1, backgroundColor: '#fff' },
+  content: { padding: 20, paddingBottom: 40 },
   baslik: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, marginTop: 10, color: '#333' },
   kategoriSatir: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   kategoriKart: { flex: 1, borderWidth: 1, borderColor: '#eee', borderRadius: 12, padding: 15, alignItems: 'center', marginHorizontal: 5, backgroundColor: '#f9f9f9' },

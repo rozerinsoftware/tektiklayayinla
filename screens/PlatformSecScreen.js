@@ -11,6 +11,7 @@ const PLATFORMLAR = [
 
 export default function PlatformSecScreen({ navigation, route }) {
   const [secilenler, setSecilenler] = useState([]);
+  const [yayinlaniyor, setYayinlaniyor] = useState(false);
   const { yeniIlan } = route.params;
 
   const platformSec = (platform) => {
@@ -26,13 +27,21 @@ export default function PlatformSecScreen({ navigation, route }) {
       Alert.alert('Hata', 'En az bir platform seçin!');
       return;
     }
+    if (yayinlaniyor) return;
     try {
+      setYayinlaniyor(true);
       const tamamlananIlan = { ...yeniIlan, platformlar: secilenler };
       await addIlan(tamamlananIlan);
       navigation.navigate('Yayinla', { ilan: tamamlananIlan });
     } catch (error) {
-      const tamamlananIlan = { ...yeniIlan, platformlar: secilenler };
-      navigation.navigate('Yayinla', { ilan: tamamlananIlan });
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        'İlan kaydedilemedi. Backend çalışıyor mu kontrol edin.';
+
+      Alert.alert('Yayınlama Hatası', message);
+    } finally {
+      setYayinlaniyor(false);
     }
   };
 
@@ -53,8 +62,14 @@ export default function PlatformSecScreen({ navigation, route }) {
         </TouchableOpacity>
       ))}
 
-      <TouchableOpacity style={styles.yayinlaButon} onPress={yayinla}>
-        <Text style={styles.yayinlaButonText}>🚀 Yayınla ({secilenler.length} platform)</Text>
+      <TouchableOpacity
+        style={[styles.yayinlaButon, yayinlaniyor && styles.yayinlaButonDisabled]}
+        onPress={yayinla}
+        disabled={yayinlaniyor}
+      >
+        <Text style={styles.yayinlaButonText}>
+          {yayinlaniyor ? 'Yayınlanıyor…' : `🚀 Yayınla (${secilenler.length} platform)`}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -69,5 +84,6 @@ const styles = StyleSheet.create({
   platformText: { fontSize: 16, fontWeight: '600', flex: 1, color: '#333' },
   check: { fontSize: 20 },
   yayinlaButon: { backgroundColor: '#2d3436', padding: 15, borderRadius: 12, alignItems: 'center', marginTop: 10 },
+  yayinlaButonDisabled: { opacity: 0.6 },
   yayinlaButonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });

@@ -16,14 +16,21 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#E6F4FE"
+      },
+      "package": "com.anonymous.tektiklayayinla"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "firebaseApiKey": "AIzaSyDAj7R10Yy5SmvfyWtB5kugSE8HPCynUvA",
+      "firebaseAuthDomain": "tektiklayayinla.firebaseapp.com",
+      "firebaseProjectId": "tektiklayayinla",
+      "firebaseStorageBucket": "tektiklayayinla.firebasestorage.app",
+      "firebaseMessagingSenderId": "578938999881",
+      "firebaseAppId": "1:578938999881:web:7feec6c1ada31ed2591b98"
     }
   }
 }

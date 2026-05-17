@@ -1,23 +1,58 @@
-import axios from 'axios';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  serverTimestamp,
+  updateDoc,
+} from 'firebase/firestore';
+import { getDb } from './firebase';
 
-const API_URL = 'http://192.168.1.35:3000';
+const ilanCol = () => collection(getDb(), 'ilanlar');
+
+const docToIlan = (snap) => {
+  const data = snap.data() || {};
+  const { detay, ...rest } = data;
+  return {
+    id: snap.id,
+    ...rest,
+    ...(detay && typeof detay === 'object' ? detay : null),
+  };
+};
 
 export const getIlanlar = async () => {
-  const response = await axios.get(`${API_URL}/ilanlar`);
-  return response.data;
+  const snap = await getDocs(ilanCol());
+  return snap.docs.map(docToIlan);
 };
 
 export const addIlan = async (ilan) => {
-  const response = await axios.post(`${API_URL}/ilanlar`, ilan);
-  return response.data;
+  const { baslik, aciklama, fiyat, platformlar, ...detay } = ilan || {};
+  const ref = await addDoc(ilanCol(), {
+    baslik,
+    aciklama,
+    fiyat,
+    platformlar,
+    detay,
+    createdAt: serverTimestamp(),
+  });
+  return { id: ref.id, baslik, aciklama, fiyat, platformlar, ...detay };
 };
 
 export const updateIlan = async (id, ilan) => {
-  const response = await axios.put(`${API_URL}/ilanlar/${id}`, ilan);
-  return response.data;
+  const { baslik, aciklama, fiyat, platformlar, ...detay } = ilan || {};
+  await updateDoc(doc(getDb(), 'ilanlar', String(id)), {
+    baslik,
+    aciklama,
+    fiyat,
+    platformlar,
+    detay,
+    updatedAt: serverTimestamp(),
+  });
+  return { id, baslik, aciklama, fiyat, platformlar, ...detay };
 };
 
 export const deleteIlan = async (id) => {
-  const response = await axios.delete(`${API_URL}/ilanlar/${id}`);
-  return response.data;
+  await deleteDoc(doc(getDb(), 'ilanlar', String(id)));
+  return { message: 'İlan silindi' };
 };

@@ -1,8 +1,19 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
+function anaSayfayaGit(navigation) {
+  const tabNav = navigation.getParent?.();
+  // "İlan Ver" sekmesindeki stack'te IlanListesi yok; üstteki Tab ile Ana Sayfa > liste açılır.
+  if (tabNav) {
+    tabNav.navigate('Ana Sayfa', { screen: 'IlanListesi' });
+    return;
+  }
+  navigation.navigate('IlanListesi');
+}
+
 export default function YayinlaScreen({ navigation, route }) {
   const { ilan } = route.params;
+  const platformlar = Array.isArray(ilan?.platformlar) ? ilan.platformlar : [];
 
   return (
     <View style={styles.container}>
@@ -14,14 +25,14 @@ export default function YayinlaScreen({ navigation, route }) {
         <Text style={styles.detayAciklama}>{ilan.aciklama}</Text>
         <Text style={styles.detayFiyat}>{ilan.fiyat} TL</Text>
         <Text style={styles.platformBaslik}>Yayınlanan Platformlar:</Text>
-        {ilan.platformlar.map((platform) => (
+        {platformlar.map((platform) => (
           <Text key={platform} style={styles.platformItem}>✅ {platform}</Text>
         ))}
       </View>
 
       <TouchableOpacity 
         style={styles.buton} 
-        onPress={() => navigation.navigate('IlanListesi')}
+        onPress={() => anaSayfayaGit(navigation)}
       >
         <Text style={styles.butonText}>Ana Sayfaya Dön</Text>
       </TouchableOpacity>

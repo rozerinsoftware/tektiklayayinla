@@ -36,6 +36,10 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# local scratch / accidental exports (keep repo clean for demos)
+/ilanlar.json
+/ilanlar.db
+
 # generated native folders
 /ios
 /android

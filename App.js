@@ -12,6 +12,29 @@ import YayinlaScreen from './screens/YayinlaScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const IlanStack = createNativeStackNavigator();
+
+function IlanFlow() {
+  return (
+    <IlanStack.Navigator>
+      <IlanStack.Screen
+        name="IlanEkle"
+        component={IlanEkleScreen}
+        options={{ title: 'İlan Ekle' }}
+      />
+      <IlanStack.Screen
+        name="PlatformSec"
+        component={PlatformSecScreen}
+        options={{ title: 'Platform Seç' }}
+      />
+      <IlanStack.Screen
+        name="Yayinla"
+        component={YayinlaScreen}
+        options={{ title: 'Yayınla' }}
+      />
+    </IlanStack.Navigator>
+  );
+}
 
 function AnaSayfa() {
   return (
@@ -57,7 +80,7 @@ function TabNavigator() {
       />
       <Tab.Screen 
         name="İlan Ver" 
-        component={IlanEkleScreen}
+        component={IlanFlow}
         options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 28 }}>➕</Text>, tabBarStyle: { paddingBottom: 20, height: 80 }, }}
       />
       <Tab.Screen 

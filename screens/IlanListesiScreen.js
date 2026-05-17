@@ -10,12 +10,8 @@ export default function IlanListesiScreen({ navigation }) {
       const data = await getIlanlar();
       setIlanlar(data);
     } catch (error) {
-      // Backend bağlantısı yoksa örnek veriler göster
-      setIlanlar([
-        { id: '1', baslik: 'Satılık Araba', aciklama: '2015 model, az kullanılmış', fiyat: '150000', platformlar: ['Sahibinden', 'Arabam.com'] },
-        { id: '2', baslik: 'Kiralık Daire', aciklama: 'Merkezi konumda 2+1 daire', fiyat: '8000', platformlar: ['Sahibinden', 'Hepsiemlak'] },
-        { id: '3', baslik: 'İkinci El Telefon', aciklama: 'iPhone 12, kutulu', fiyat: '15000', platformlar: ['Letgo', 'Sahibinden'] },
-      ]);
+      setIlanlar([]);
+      Alert.alert('Veri Hatası', error?.message || 'İlanlar yüklenemedi.');
     }
   };
 
@@ -28,8 +24,12 @@ export default function IlanListesiScreen({ navigation }) {
     Alert.alert('İlan Sil', 'Bu ilanı silmek istediğinize emin misiniz?', [
       { text: 'İptal', style: 'cancel' },
       { text: 'Sil', style: 'destructive', onPress: async () => {
-        await deleteIlan(id);
-        ilanlariGetir();
+        try {
+          await deleteIlan(id);
+          ilanlariGetir();
+        } catch (error) {
+          Alert.alert('Silinemedi', error?.message || 'İlan silinirken bir hata oluştu.');
+        }
       }},
     ]);
   };
@@ -53,7 +53,14 @@ export default function IlanListesiScreen({ navigation }) {
       />
       <TouchableOpacity 
         style={styles.ekleButon}
-        onPress={() => navigation.navigate('IlanEkle')}
+        onPress={() => {
+          const tabNav = navigation.getParent();
+          if (tabNav) {
+            tabNav.navigate('İlan Ver', { screen: 'IlanEkle' });
+            return;
+          }
+          navigation.navigate('IlanEkle');
+        }}
       >
         <Text style={styles.ekleButonText}>+ Yeni İlan Ekle</Text>
       </TouchableOpacity>
