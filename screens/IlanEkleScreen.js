@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
@@ -10,36 +9,34 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { colors, radius } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { AppInput, PrimaryButton, SectionTitle } from '../components/ui';
+import { colors, radius, shadow, spacing, getKategoriMeta } from '../constants/theme';
 
-const KATEGORILER = [
-  { isim: 'Emlak', emoji: '🏠', renk: '#00B894' },
-  { isim: 'Araç', emoji: '🚗', renk: '#FF4500' },
-  { isim: 'İkinci El', emoji: '📦', renk: '#6C5CE7' },
-];
+const KATEGORILER = ['Emlak', 'Araç', 'İkinci El'];
 
 const KATEGORI_ALANLARI = {
   Emlak: [
-    { key: 'ilanTuru', label: 'İlan Türü', placeholder: 'Satılık / Kiralık' },
-    { key: 'emlakTipi', label: 'Emlak Tipi', placeholder: 'Daire / Villa / Arsa...' },
-    { key: 'metrekare', label: 'Metrekare (m²)', placeholder: 'Örn: 120', keyboard: 'numeric' },
-    { key: 'odaSayisi', label: 'Oda Sayısı', placeholder: 'Örn: 3+1' },
-    { key: 'binaYasi', label: 'Bina Yaşı', placeholder: 'Örn: 5', keyboard: 'numeric' },
-    { key: 'kat', label: 'Bulunduğu Kat', placeholder: 'Örn: 3', keyboard: 'numeric' },
+    { key: 'ilanTuru', label: 'İlan Türü', placeholder: 'Satılık / Kiralık', icon: 'pricetag-outline' },
+    { key: 'emlakTipi', label: 'Emlak Tipi', placeholder: 'Daire / Villa / Arsa...', icon: 'home-outline' },
+    { key: 'metrekare', label: 'Metrekare (m²)', placeholder: 'Örn: 120', keyboard: 'numeric', icon: 'resize-outline' },
+    { key: 'odaSayisi', label: 'Oda Sayısı', placeholder: 'Örn: 3+1', icon: 'bed-outline' },
+    { key: 'binaYasi', label: 'Bina Yaşı', placeholder: 'Örn: 5', keyboard: 'numeric', icon: 'calendar-outline' },
+    { key: 'kat', label: 'Bulunduğu Kat', placeholder: 'Örn: 3', keyboard: 'numeric', icon: 'layers-outline' },
   ],
   Araç: [
-    { key: 'aracTipi', label: 'Araç Tipi', placeholder: 'Otomobil / Motosiklet / SUV...' },
-    { key: 'marka', label: 'Marka', placeholder: 'Örn: Toyota' },
-    { key: 'model', label: 'Model', placeholder: 'Örn: Corolla' },
-    { key: 'yil', label: 'Yıl', placeholder: 'Örn: 2020', keyboard: 'numeric' },
-    { key: 'kilometre', label: 'Kilometre', placeholder: 'Örn: 50000', keyboard: 'numeric' },
-    { key: 'yakit', label: 'Yakıt Tipi', placeholder: 'Benzin / Dizel / Elektrik' },
-    { key: 'vites', label: 'Vites', placeholder: 'Manuel / Otomatik' },
+    { key: 'aracTipi', label: 'Araç Tipi', placeholder: 'Otomobil / SUV...', icon: 'car-outline' },
+    { key: 'marka', label: 'Marka', placeholder: 'Örn: Toyota', icon: 'business-outline' },
+    { key: 'model', label: 'Model', placeholder: 'Örn: Corolla', icon: 'construct-outline' },
+    { key: 'yil', label: 'Yıl', placeholder: 'Örn: 2020', keyboard: 'numeric', icon: 'calendar-outline' },
+    { key: 'kilometre', label: 'Kilometre', placeholder: 'Örn: 50000', keyboard: 'numeric', icon: 'speedometer-outline' },
+    { key: 'yakit', label: 'Yakıt Tipi', placeholder: 'Benzin / Dizel', icon: 'water-outline' },
+    { key: 'vites', label: 'Vites', placeholder: 'Manuel / Otomatik', icon: 'cog-outline' },
   ],
   'İkinci El': [
-    { key: 'urunTipi', label: 'Ürün Tipi', placeholder: 'Telefon / Bilgisayar / Giyim...' },
-    { key: 'marka', label: 'Marka', placeholder: 'Örn: Apple' },
-    { key: 'durum', label: 'Ürün Durumu', placeholder: 'Sıfır / Az Kullanılmış / İyi' },
+    { key: 'urunTipi', label: 'Ürün Tipi', placeholder: 'Telefon / Bilgisayar...', icon: 'cube-outline' },
+    { key: 'marka', label: 'Marka', placeholder: 'Örn: Apple', icon: 'business-outline' },
+    { key: 'durum', label: 'Ürün Durumu', placeholder: 'Sıfır / İyi', icon: 'star-outline' },
   ],
 };
 
@@ -51,59 +48,38 @@ export default function IlanEkleScreen({ navigation }) {
   const [ekstraAlanlar, setEkstraAlanlar] = useState({});
 
   const ekstraGuncelle = (key, value) => {
-    setEkstraAlanlar(prev => ({ ...prev, [key]: value }));
+    setEkstraAlanlar((prev) => ({ ...prev, [key]: value }));
   };
 
   const fiyatGuncelle = (text) => {
-    const harfVar = /[a-zA-ZğüşıöçĞÜŞİÖÇ]/.test(text);
-    const sadeceRakam = text.replace(/\D/g, '');
-    if (harfVar) {
+    if (/[a-zA-ZğüşıöçĞÜŞİÖÇ]/.test(text)) {
       Alert.alert('Fiyat hatalı', 'Fiyat alanına sadece rakam girebilirsiniz.');
     }
-    setFiyat(sadeceRakam);
-  };
-
-  const parseFiyatTl = (raw) => {
-    const s = String(raw ?? '').trim().replace(/\D/g, '');
-    if (!s) return NaN;
-    const n = Number(s);
-    return Number.isFinite(n) ? n : NaN;
+    setFiyat(text.replace(/\D/g, ''));
   };
 
   const devamEt = () => {
     if (!kategori) {
-      Alert.alert('Uyarı', 'Lütfen bir kategori seçin (Emlak, Araç veya İkinci El).');
+      Alert.alert('Uyarı', 'Lütfen bir kategori seçin.');
       return;
     }
-    if (!baslik.trim()) {
-      Alert.alert('Uyarı', 'İlan başlığı boş bırakılamaz.');
+    if (!baslik.trim() || !aciklama.trim() || !String(fiyat).trim()) {
+      Alert.alert('Uyarı', 'Başlık, açıklama ve fiyat zorunludur.');
       return;
     }
-    if (!aciklama.trim()) {
-      Alert.alert('Uyarı', 'Açıklama boş bırakılamaz.');
+    const fiyatSayi = Number(fiyat);
+    if (!Number.isFinite(fiyatSayi) || fiyatSayi < 10) {
+      Alert.alert('Fiyat hatalı', 'Geçerli bir fiyat girin (en az 10 TL).');
       return;
     }
-    if (!String(fiyat).trim()) {
-      Alert.alert('Uyarı', 'Fiyat alanı boş bırakılamaz.');
-      return;
-    }
-
-    const fiyatSayi = parseFiyatTl(fiyat);
-    if (!Number.isFinite(fiyatSayi) || fiyatSayi <= 0) {
-      Alert.alert('Fiyat hatalı', 'Geçerli bir fiyat girin (sadece rakam).');
-      return;
-    }
-    if (fiyatSayi < 10) {
-      Alert.alert('Hata', 'Fiyat en az 10 TL olmalı.');
-      return;
-    }
-    if (fiyatSayi > 10_000_000_000) {
-      Alert.alert('Hata', 'Fiyat çok büyük; kontrol edip tekrar girin.');
-      return;
-    }
-    const fiyatMetin = String(Math.round(fiyatSayi));
     navigation.navigate('PlatformSec', {
-      yeniIlan: { baslik: baslik.trim(), aciklama: aciklama.trim(), fiyat: fiyatMetin, kategori, ...ekstraAlanlar },
+      yeniIlan: {
+        baslik: baslik.trim(),
+        aciklama: aciklama.trim(),
+        fiyat: String(Math.round(fiyatSayi)),
+        kategori,
+        ...ekstraAlanlar,
+      },
     });
   };
 
@@ -118,64 +94,77 @@ export default function IlanEkleScreen({ navigation }) {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
-          <Text style={styles.baslik}>Kategori Seçin</Text>
-          <View style={styles.kategoriSatir}>
-            {KATEGORILER.map((k) => (
+        <SectionTitle icon="grid-outline" title="Kategori Seçin" subtitle="İlanınızın türünü belirleyin" />
+
+        <View style={styles.kategoriSatir}>
+          {KATEGORILER.map((isim) => {
+            const meta = getKategoriMeta(isim);
+            const secili = kategori === isim;
+            return (
               <TouchableOpacity
-                key={k.isim}
-                style={[styles.kategoriKart, kategori === k.isim && { borderColor: k.renk, borderWidth: 2 }]}
-                onPress={() => setKategori(k.isim)}
+                key={isim}
+                style={[
+                  styles.kategoriKart,
+                  secili && { borderColor: meta.renk, borderWidth: 2, backgroundColor: meta.bg },
+                ]}
+                onPress={() => setKategori(isim)}
+                activeOpacity={0.85}
               >
-                <Text style={styles.kategoriEmoji}>{k.emoji}</Text>
-                <Text style={styles.kategoriIsim}>{k.isim}</Text>
+                <Text style={styles.kategoriEmoji}>{meta.emoji}</Text>
+                <Text style={styles.kategoriIsim}>{isim}</Text>
+                {secili ? (
+                  <Ionicons name="checkmark-circle" size={20} color={meta.renk} style={styles.kategoriCheck} />
+                ) : null}
               </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {kategori ? (
+          <View style={styles.formKart}>
+            <SectionTitle icon="document-text-outline" title="İlan Bilgileri" />
+
+            <AppInput
+              label="İlan Başlığı *"
+              icon="text-outline"
+              placeholder="Örn: Satılık Daire"
+              value={baslik}
+              onChangeText={setBaslik}
+            />
+            <AppInput
+              label="Açıklama *"
+              icon="reader-outline"
+              placeholder="İlanınızı açıklayın"
+              value={aciklama}
+              onChangeText={setAciklama}
+              multiline
+              style={{ minHeight: 80, textAlignVertical: 'top' }}
+            />
+            <AppInput
+              label="Fiyat (TL) *"
+              icon="cash-outline"
+              placeholder="Örn: 1500000"
+              value={fiyat}
+              onChangeText={fiyatGuncelle}
+              keyboardType="number-pad"
+              maxLength={12}
+            />
+
+            {KATEGORI_ALANLARI[kategori].map((alan) => (
+              <AppInput
+                key={alan.key}
+                label={`${alan.label} (isteğe bağlı)`}
+                icon={alan.icon}
+                placeholder={alan.placeholder}
+                value={ekstraAlanlar[alan.key] || ''}
+                onChangeText={(val) => ekstraGuncelle(alan.key, val)}
+                keyboardType={alan.keyboard || 'default'}
+              />
             ))}
+
+            <PrimaryButton title="Devam Et" icon="arrow-forward" onPress={devamEt} />
           </View>
-
-          {kategori && (
-            <>
-              <Text style={styles.baslik}>İlan Bilgileri</Text>
-
-              <Text style={styles.label}>İlan Başlığı *</Text>
-              <TextInput style={styles.input} placeholder="Örn: Satılık Daire" value={baslik} onChangeText={setBaslik} />
-
-              <Text style={styles.label}>Açıklama *</Text>
-              <TextInput
-                style={[styles.input, styles.textarea]}
-                placeholder="İlanınızı açıklayın"
-                value={aciklama}
-                onChangeText={setAciklama}
-                multiline
-              />
-
-              <Text style={styles.label}>Fiyat (TL) *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Örn: 15000 (sadece rakam)"
-                value={fiyat}
-                onChangeText={fiyatGuncelle}
-                keyboardType="number-pad"
-                maxLength={12}
-              />
-
-              {KATEGORI_ALANLARI[kategori].map((alan) => (
-                <View key={alan.key}>
-                  <Text style={styles.label}>{alan.label} (isteğe bağlı)</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder={alan.placeholder}
-                    value={ekstraAlanlar[alan.key] || ''}
-                    onChangeText={(val) => ekstraGuncelle(alan.key, val)}
-                    keyboardType={alan.keyboard || 'default'}
-                  />
-                </View>
-              ))}
-
-              <TouchableOpacity style={styles.buton} onPress={devamEt}>
-                <Text style={styles.butonText}>Devam Et →</Text>
-              </TouchableOpacity>
-            </>
-          )}
+        ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -183,39 +172,27 @@ export default function IlanEkleScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 20, paddingBottom: 40 },
-  baslik: { fontSize: 18, fontWeight: '700', marginBottom: 15, marginTop: 10, color: colors.text },
-  kategoriSatir: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+  content: { padding: spacing.lg, paddingBottom: 40 },
+  kategoriSatir: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.lg, gap: spacing.sm },
   kategoriKart: {
     flex: 1,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    padding: 15,
+    padding: spacing.md,
     alignItems: 'center',
-    marginHorizontal: 5,
     backgroundColor: colors.surface,
+    ...shadow.card,
   },
-  kategoriEmoji: { fontSize: 30, marginBottom: 5 },
-  kategoriIsim: { fontSize: 13, fontWeight: '600', color: colors.text },
-  label: { fontSize: 15, fontWeight: '600', marginBottom: 5, color: colors.text },
-  input: {
+  kategoriEmoji: { fontSize: 28, marginBottom: 4 },
+  kategoriIsim: { fontSize: 12, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  kategoriCheck: { marginTop: 6 },
+  formKart: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
-    padding: 12,
-    borderRadius: radius.sm,
-    marginBottom: 15,
-    fontSize: 15,
+    ...shadow.card,
   },
-  textarea: { height: 80, textAlignVertical: 'top' },
-  buton: {
-    backgroundColor: colors.primary,
-    padding: 16,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    marginTop: 5,
-    marginBottom: 30,
-  },
-  butonText: { color: colors.primaryText, fontSize: 16, fontWeight: '700' },
 });

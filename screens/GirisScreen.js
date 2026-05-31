@@ -2,18 +2,19 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
   Alert,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { signIn } from '../auth';
 import { ensureUserProfile } from '../api';
+import { AppInput, PrimaryButton } from '../components/ui';
+import { colors, radius, shadow, spacing } from '../constants/theme';
 
 export default function GirisScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -45,56 +46,52 @@ export default function GirisScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.icerik} keyboardShouldPersistTaps="handled">
           <View style={styles.logoKutu}>
-            <Text style={styles.logoYazi}>👆</Text>
+            <Ionicons name="megaphone" size={44} color={colors.primaryText} />
           </View>
 
           <Text style={styles.baslik}>TekTıklaYayınla</Text>
-          <Text style={styles.slogan}>İlanını bir kere gir,{'\n'}her yerde yayınla!</Text>
+          <Text style={styles.slogan}>İlanını bir kere gir, her yerde yayınla</Text>
 
-          <Text style={styles.label}>E-posta</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="ornek@mail.com"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            autoComplete="email"
-          />
+          <View style={styles.formKart}>
+            <AppInput
+              label="E-posta"
+              icon="mail-outline"
+              placeholder="ornek@mail.com"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+            <AppInput
+              label="Şifre"
+              icon="lock-closed-outline"
+              placeholder="Şifreniz"
+              value={sifre}
+              onChangeText={setSifre}
+              secureTextEntry
+            />
+            <PrimaryButton title="Giriş Yap" icon="log-in-outline" onPress={girisYap} loading={yukleniyor} />
+          </View>
 
-          <Text style={styles.label}>Şifre</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Şifreniz"
-            value={sifre}
-            onChangeText={setSifre}
-            secureTextEntry
-            autoComplete="password"
-          />
-
-          {yukleniyor ? (
-            <ActivityIndicator color="#fff" style={styles.loader} />
-          ) : (
-            <TouchableOpacity style={styles.baslaButon} onPress={girisYap}>
-              <Text style={styles.baslaButonText}>Giriş Yap</Text>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity
-            style={styles.kayitLink}
-            onPress={() => navigation.navigate('Kayit')}
-          >
+          <TouchableOpacity style={styles.kayitLink} onPress={() => navigation.navigate('Kayit')}>
+            <Ionicons name="person-add-outline" size={18} color={colors.primaryText} />
             <Text style={styles.kayitLinkText}>Hesap Oluştur</Text>
           </TouchableOpacity>
 
-          <Text style={styles.altYazi}>Sahibinden • Arabam.com • Letgo • Emlakjet</Text>
+          <View style={styles.platformSatir}>
+            {['storefront-outline', 'car-outline', 'cube-outline'].map((icon) => (
+              <View key={icon} style={styles.platformIcon}>
+                <Ionicons name={icon} size={22} color={colors.primaryText} />
+              </View>
+            ))}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -102,48 +99,60 @@ export default function GirisScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFC800' },
+  safe: { flex: 1, backgroundColor: colors.headerBg },
   flex: { flex: 1 },
-  icerik: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 30 },
+  icerik: { flexGrow: 1, padding: spacing.xl, paddingTop: 40 },
   logoKutu: {
-    width: 100,
-    height: 100,
-    backgroundColor: '#fff',
-    borderRadius: 25,
+    width: 88,
+    height: 88,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 25,
-    elevation: 10,
+    alignSelf: 'center',
+    marginBottom: spacing.lg,
+    ...shadow.card,
   },
-  logoYazi: { fontSize: 50 },
-  baslik: { fontSize: 32, fontWeight: 'bold', color: '#fff', marginBottom: 10 },
-  slogan: { fontSize: 18, color: '#e8f0fe', textAlign: 'center', marginBottom: 24, lineHeight: 26 },
-  label: { alignSelf: 'stretch', color: '#fff', fontWeight: '600', marginBottom: 6 },
-  input: {
-    alignSelf: 'stretch',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 14,
-    fontSize: 16,
+  baslik: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.primaryText,
+    textAlign: 'center',
   },
-  loader: { marginVertical: 20 },
-  baslaButon: {
-    backgroundColor: '#fff',
-    padding: 18,
-    borderRadius: 30,
-    width: '100%',
-    alignItems: 'center',
-    elevation: 5,
-    marginTop: 8,
+  slogan: {
+    fontSize: 15,
+    color: colors.primaryText,
+    opacity: 0.8,
+    textAlign: 'center',
+    marginTop: 6,
+    marginBottom: spacing.xl,
   },
-  baslaButonText: { color: '#1A1A1A', fontSize: 18, fontWeight: 'bold' },
+  formKart: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    ...shadow.card,
+  },
   kayitLink: {
-    marginTop: 16,
-    padding: 14,
-    width: '100%',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.xl,
+    gap: 8,
   },
-  kayitLinkText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  altYazi: { color: 'rgba(255,255,255,0.6)', marginTop: 24, fontSize: 12, textAlign: 'center' },
+  kayitLinkText: { color: colors.primaryText, fontSize: 16, fontWeight: '700' },
+  platformSatir: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.lg,
+    marginTop: spacing.xxl,
+  },
+  platformIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

@@ -2,7 +2,8 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
+import { View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import GirisScreen from './screens/GirisScreen';
@@ -15,7 +16,15 @@ import ProfilScreen from './screens/ProfilScreen';
 import AdminPanelScreen from './screens/AdminPanelScreen';
 import AdminIlanDuzenleScreen from './screens/AdminIlanDuzenleScreen';
 import IlanDetayScreen from './screens/IlanDetayScreen';
-import { colors, stackScreenOptions } from './constants/theme';
+import { colors, stackScreenOptions, tabBarOptions } from './constants/theme';
+
+function TabIcon({ name, focused, size = 24 }) {
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <Ionicons name={focused ? name : `${name}-outline`} size={size} color={focused ? colors.primaryText : colors.textMuted} />
+    </View>
+  );
+}
 
 const Stack = createNativeStackNavigator();
 const ProfilStack = createNativeStackNavigator();
@@ -90,22 +99,26 @@ function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: colors.primaryText,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { ...varsayilanTabBar, backgroundColor: colors.surface, borderTopColor: colors.border },
+        ...tabBarOptions,
+        tabBarStyle: {
+          ...varsayilanTabBar,
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+        },
         headerShown: false,
       }}
     >
       <Tab.Screen 
         name="Ana Sayfa" 
         component={AnaSayfa}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 22 }}>🏠</Text> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} /> }}
       />
       <Tab.Screen 
         name="İlan Ver" 
         component={IlanFlow}
         options={{
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 28 }}>➕</Text>,
+          tabBarIcon: ({ focused }) => <TabIcon name="add-circle" focused={focused} size={28} />,
           tabBarStyle: {
             paddingBottom: altBosluk + 6,
             paddingTop: 10,
@@ -116,12 +129,12 @@ function TabNavigator() {
       <Tab.Screen 
         name="Ara" 
         component={AraSayfa}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 22 }}>🔍</Text> }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon name="search" focused={focused} /> }}
       />
       <Tab.Screen 
         name="Profilim" 
         component={ProfilFlow}
-        options={{ tabBarIcon: ({ color }) => <Text style={{ fontSize: 22 }}>👤</Text>, headerShown: false }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon name="person" focused={focused} />, headerShown: false }}
       />
     </Tab.Navigator>
   );

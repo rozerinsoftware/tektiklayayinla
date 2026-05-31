@@ -1,21 +1,15 @@
 import React, { useCallback, useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { getFirebaseAuth, signOutUser } from '../auth';
 import { isCurrentUserAdmin } from '../api';
-import { colors, radius } from '../constants/theme';
+import { Card, PrimaryButton, SecondaryButton } from '../components/ui';
+import { colors, radius, shadow, spacing } from '../constants/theme';
 
 export default function ProfilScreen({ navigation }) {
   const [admin, setAdmin] = useState(false);
   const [yukleniyor, setYukleniyor] = useState(true);
-
   const kullanici = getFirebaseAuth().currentUser;
 
   useFocusEffect(
@@ -52,84 +46,73 @@ export default function ProfilScreen({ navigation }) {
         style: 'destructive',
         onPress: async () => {
           await signOutUser();
-          kokNavigasyon().reset({
-            index: 0,
-            routes: [{ name: 'Giris' }],
-          });
+          kokNavigasyon().reset({ index: 0, routes: [{ name: 'Giris' }] });
         },
       },
     ]);
   };
 
-  const adminPaneleGit = () => {
-    navigation.navigate('AdminPanel');
-  };
-
   return (
-    <View style={styles.container}>
-      <View style={styles.kart}>
-        <Text style={styles.avatar}>👤</Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Card style={styles.profilKart}>
+        <View style={styles.avatar}>
+          <Ionicons name="person" size={40} color={colors.primaryText} />
+        </View>
         <Text style={styles.isim}>{kullanici?.displayName || 'Kullanıcı'}</Text>
-        <Text style={styles.email}>{kullanici?.email || ''}</Text>
-        {admin && <Text style={styles.adminBadge}>Admin</Text>}
-      </View>
+        <View style={styles.emailSatir}>
+          <Ionicons name="mail-outline" size={16} color={colors.textMuted} />
+          <Text style={styles.email}>{kullanici?.email || ''}</Text>
+        </View>
+        {admin ? (
+          <View style={styles.adminBadge}>
+            <Ionicons name="shield-checkmark" size={14} color="#856404" />
+            <Text style={styles.adminBadgeText}>Admin</Text>
+          </View>
+        ) : null}
+      </Card>
 
       {yukleniyor ? (
         <ActivityIndicator style={styles.loader} color={colors.primaryDark} />
-      ) : (
-        admin && (
-          <TouchableOpacity style={styles.adminButon} onPress={adminPaneleGit}>
-            <Text style={styles.adminButonText}>🛡️ Admin Paneli</Text>
-          </TouchableOpacity>
-        )
-      )}
+      ) : admin ? (
+        <PrimaryButton
+          title="Admin Paneli"
+          icon="settings-outline"
+          onPress={() => navigation.navigate('AdminPanel')}
+        />
+      ) : null}
 
-      <TouchableOpacity style={styles.cikisButon} onPress={cikisYap}>
-        <Text style={styles.cikisButonText}>Çıkış Yap</Text>
-      </TouchableOpacity>
-    </View>
+      <SecondaryButton title="Çıkış Yap" icon="log-out-outline" onPress={cikisYap} danger />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: 20 },
-  kart: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.lg, paddingBottom: 40 },
+  profilKart: { alignItems: 'center' },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.primary,
     alignItems: 'center',
-    marginBottom: 20,
-    elevation: 3,
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+    ...shadow.soft,
   },
-  avatar: { fontSize: 56, marginBottom: 12 },
-  isim: { fontSize: 22, fontWeight: 'bold', color: '#333' },
-  email: { fontSize: 15, color: '#666', marginTop: 6 },
+  isim: { fontSize: 22, fontWeight: '800', color: colors.text },
+  emailSatir: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
+  email: { fontSize: 14, color: colors.textSecondary },
   adminBadge: {
-    marginTop: 12,
-    backgroundColor: '#fff3cd',
-    color: '#856404',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: spacing.md,
+    backgroundColor: '#FEF3C7',
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 20,
-    fontWeight: 'bold',
-    overflow: 'hidden',
+    borderRadius: radius.pill,
   },
-  loader: { marginVertical: 20 },
-  adminButon: {
-    backgroundColor: colors.primary,
-    padding: 16,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  adminButonText: { color: colors.primaryText, fontSize: 17, fontWeight: 'bold' },
-  cikisButon: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e74c3c',
-  },
-  cikisButonText: { color: '#e74c3c', fontSize: 16, fontWeight: 'bold' },
+  adminBadgeText: { color: '#92400E', fontWeight: '700', fontSize: 13 },
+  loader: { marginVertical: spacing.lg },
 });

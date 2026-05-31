@@ -40,6 +40,19 @@ export const shadow = {
     shadowRadius: 8,
     elevation: 3,
   },
+  soft: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+};
+
+export const tabBarOptions = {
+  tabBarActiveTintColor: colors.primaryText,
+  tabBarInactiveTintColor: colors.textMuted,
+  tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
 };
 
 export const stackScreenOptions = {

@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import {
-  View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
   Alert,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { signUp } from '../auth';
 import { createUserProfile } from '../api';
+import { AppInput, PrimaryButton } from '../components/ui';
+import { colors, radius, shadow, spacing } from '../constants/theme';
 
 export default function KayitScreen({ navigation }) {
   const [ad, setAd] = useState('');
@@ -44,11 +44,9 @@ export default function KayitScreen({ navigation }) {
       const kod = error?.code || '';
       let mesaj = error?.message || 'Kayıt oluşturulamadı.';
       if (kod === 'auth/email-already-in-use') {
-        mesaj = 'Bu e-posta zaten kayıtlı. Giriş yapmayı deneyin.';
+        mesaj = 'Bu e-posta zaten kayıtlı.';
       } else if (kod === 'auth/invalid-email') {
-        mesaj = 'Geçerli bir e-posta adresi girin.';
-      } else if (kod === 'auth/weak-password') {
-        mesaj = 'Şifre çok zayıf. En az 6 karakter kullanın.';
+        mesaj = 'Geçerli bir e-posta girin.';
       }
       Alert.alert('Kayıt Hatası', mesaj);
     } finally {
@@ -57,66 +55,38 @@ export default function KayitScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+    <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.icerik} keyboardShouldPersistTaps="handled">
           <Text style={styles.baslik}>Hesap Oluştur</Text>
           <Text style={styles.altBaslik}>Bilgilerinizi girerek kayıt olun</Text>
 
-          <Text style={styles.label}>Ad</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Adınız"
-            value={ad}
-            onChangeText={setAd}
-            autoCapitalize="words"
-            autoComplete="given-name"
-          />
-
-          <Text style={styles.label}>Soyad</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Soyadınız"
-            value={soyad}
-            onChangeText={setSoyad}
-            autoCapitalize="words"
-            autoComplete="family-name"
-          />
-
-          <Text style={styles.label}>E-posta</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="ornek@mail.com"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            autoComplete="email"
-          />
-
-          <Text style={styles.label}>Şifre</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="En az 6 karakter"
-            value={sifre}
-            onChangeText={setSifre}
-            secureTextEntry
-            autoComplete="new-password"
-          />
-
-          {yukleniyor ? (
-            <ActivityIndicator color="#fff" style={styles.loader} />
-          ) : (
-            <TouchableOpacity style={styles.kayitButon} onPress={kayitOl}>
-              <Text style={styles.kayitButonText}>Kayıt Ol</Text>
-            </TouchableOpacity>
-          )}
+          <View style={styles.formKart}>
+            <AppInput label="Ad" icon="person-outline" placeholder="Adınız" value={ad} onChangeText={setAd} />
+            <AppInput label="Soyad" icon="person-outline" placeholder="Soyadınız" value={soyad} onChangeText={setSoyad} />
+            <AppInput
+              label="E-posta"
+              icon="mail-outline"
+              placeholder="ornek@mail.com"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+            <AppInput
+              label="Şifre"
+              icon="lock-closed-outline"
+              placeholder="En az 6 karakter"
+              value={sifre}
+              onChangeText={setSifre}
+              secureTextEntry
+            />
+            <PrimaryButton title="Kayıt Ol" icon="checkmark-circle-outline" onPress={kayitOl} loading={yukleniyor} />
+          </View>
 
           <TouchableOpacity style={styles.geriLink} onPress={() => navigation.goBack()}>
-            <Text style={styles.geriLinkText}>Zaten hesabın var mı? Giriş yap</Text>
+            <Ionicons name="arrow-back" size={18} color={colors.link} />
+            <Text style={styles.geriLinkText}>Giriş ekranına dön</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -125,29 +95,17 @@ export default function KayitScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFC800' },
+  safe: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  icerik: { flexGrow: 1, padding: 30, paddingTop: 40 },
-  baslik: { fontSize: 28, fontWeight: 'bold', color: '#fff', marginBottom: 8 },
-  altBaslik: { fontSize: 16, color: '#e8f0fe', marginBottom: 28 },
-  label: { color: '#fff', fontWeight: '600', marginBottom: 6 },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 14,
-    fontSize: 16,
+  icerik: { padding: spacing.xl, paddingBottom: 40 },
+  baslik: { fontSize: 26, fontWeight: '800', color: colors.text },
+  altBaslik: { fontSize: 15, color: colors.textSecondary, marginTop: 6, marginBottom: spacing.lg },
+  formKart: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    ...shadow.card,
   },
-  loader: { marginVertical: 20 },
-  kayitButon: {
-    backgroundColor: '#fff',
-    padding: 18,
-    borderRadius: 30,
-    alignItems: 'center',
-    elevation: 5,
-    marginTop: 8,
-  },
-  kayitButonText: { color: '#1A1A1A', fontSize: 18, fontWeight: 'bold' },
-  geriLink: { marginTop: 20, alignItems: 'center', padding: 10 },
-  geriLinkText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  geriLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: spacing.xl, gap: 6 },
+  geriLinkText: { color: colors.link, fontSize: 15, fontWeight: '600' },
 });

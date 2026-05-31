@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Image, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { addIlan } from '../api';
-import { colors, radius } from '../constants/theme';
+import { PrimaryButton, SectionTitle } from '../components/ui';
+import { colors, radius, shadow, spacing } from '../constants/theme';
 
 const PLATFORMLAR = [
   { isim: 'Sahibinden', renk: '#FFD700', logo: require('../assets/sahibinden.png') },
@@ -16,11 +18,9 @@ export default function PlatformSecScreen({ navigation, route }) {
   const { yeniIlan } = route.params;
 
   const platformSec = (platform) => {
-    if (secilenler.includes(platform)) {
-      setSecilenler(secilenler.filter(p => p !== platform));
-    } else {
-      setSecilenler([...secilenler, platform]);
-    }
+    setSecilenler((prev) =>
+      prev.includes(platform) ? prev.filter((p) => p !== platform) : [...prev, platform]
+    );
   };
 
   const yayinla = async () => {
@@ -48,8 +48,7 @@ export default function PlatformSecScreen({ navigation, route }) {
       const message =
         error?.response?.data?.message ||
         error?.message ||
-        'İlan kaydedilemedi. Backend çalışıyor mu kontrol edin.';
-
+        'İlan kaydedilemedi. İnternet bağlantınızı kontrol edin.';
       Alert.alert('Yayınlama Hatası', message);
     } finally {
       setYayinlaniyor(false);
@@ -57,59 +56,68 @@ export default function PlatformSecScreen({ navigation, route }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.baslik}>Platform Seçin</Text>
-      <Text style={styles.aciklama}>İlanınızı yayınlamak istediğiniz platformları seçin:</Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <SectionTitle
+        icon="globe-outline"
+        title="Platform Seçin"
+        subtitle="İlanınızı yayınlamak istediğiniz siteleri işaretleyin"
+      />
 
-      {PLATFORMLAR.map((platform) => (
-        <TouchableOpacity
-          key={platform.isim}
-          style={[styles.platformKart, secilenler.includes(platform.isim) && { borderColor: platform.renk, borderWidth: 2.5 }]}
-          onPress={() => platformSec(platform.isim)}
-        >
-          <Image source={platform.logo} style={styles.logo} resizeMode="contain" />
-          <Text style={styles.platformText}>{platform.isim}</Text>
-          <Text style={styles.check}>{secilenler.includes(platform.isim) ? '✅' : '⬜'}</Text>
-        </TouchableOpacity>
-      ))}
+      {PLATFORMLAR.map((platform) => {
+        const secili = secilenler.includes(platform.isim);
+        return (
+          <TouchableOpacity
+            key={platform.isim}
+            style={[styles.platformKart, secili && { borderColor: platform.renk, borderWidth: 2 }]}
+            onPress={() => platformSec(platform.isim)}
+            activeOpacity={0.85}
+          >
+            <Image source={platform.logo} style={styles.logo} resizeMode="contain" />
+            <Text style={styles.platformText}>{platform.isim}</Text>
+            <View style={[styles.checkKutu, secili && { backgroundColor: platform.renk }]}>
+              <Ionicons
+                name={secili ? 'checkmark' : 'ellipse-outline'}
+                size={secili ? 20 : 22}
+                color={secili ? '#fff' : colors.textMuted}
+              />
+            </View>
+          </TouchableOpacity>
+        );
+      })}
 
-      <TouchableOpacity
-        style={[styles.yayinlaButon, yayinlaniyor && styles.yayinlaButonDisabled]}
+      <PrimaryButton
+        title={yayinlaniyor ? 'Yayınlanıyor…' : `Yayınla (${secilenler.length} platform)`}
+        icon="rocket-outline"
         onPress={yayinla}
-        disabled={yayinlaniyor}
-      >
-        <Text style={styles.yayinlaButonText}>
-          {yayinlaniyor ? 'Yayınlanıyor…' : `🚀 Yayınla (${secilenler.length} platform)`}
-        </Text>
-      </TouchableOpacity>
-    </View>
+        loading={yayinlaniyor}
+        disabled={secilenler.length === 0}
+      />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: 20 },
-  baslik: { fontSize: 22, fontWeight: '700', marginBottom: 5, color: colors.text },
-  aciklama: { color: colors.textSecondary, marginBottom: 20 },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.lg, paddingBottom: 40 },
   platformKart: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 15,
+    padding: spacing.md,
     borderRadius: radius.md,
-    marginBottom: 12,
+    marginBottom: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
+    ...shadow.card,
   },
-  logo: { width: 50, height: 50, marginRight: 15, borderRadius: 8 },
-  platformText: { fontSize: 16, fontWeight: '600', flex: 1, color: colors.text },
-  check: { fontSize: 20 },
-  yayinlaButon: {
-    backgroundColor: colors.primary,
-    padding: 16,
-    borderRadius: radius.md,
+  logo: { width: 48, height: 48, marginRight: spacing.md, borderRadius: radius.sm },
+  platformText: { fontSize: 16, fontWeight: '700', flex: 1, color: colors.text },
+  checkKutu: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.background,
     alignItems: 'center',
-    marginTop: 10,
+    justifyContent: 'center',
   },
-  yayinlaButonDisabled: { opacity: 0.6 },
-  yayinlaButonText: { color: colors.primaryText, fontSize: 16, fontWeight: '700' },
 });

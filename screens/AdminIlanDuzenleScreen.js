@@ -1,47 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { adminUpdateIlan } from '../api';
-import { colors, radius } from '../constants/theme';
+import { AppInput, PrimaryButton, SectionTitle } from '../components/ui';
+import { colors, radius, shadow, spacing, getKategoriMeta } from '../constants/theme';
 
-const KATEGORILER = [
-  { isim: 'Emlak', emoji: '🏠', renk: '#00B894' },
-  { isim: 'Araç', emoji: '🚗', renk: '#FF4500' },
-  { isim: 'İkinci El', emoji: '📦', renk: '#6C5CE7' },
-];
+const KATEGORILER = ['Emlak', 'Araç', 'İkinci El'];
 
 const KATEGORI_ALANLARI = {
   Emlak: [
-    { key: 'ilanTuru', label: 'İlan Türü', placeholder: 'Satılık / Kiralık' },
-    { key: 'emlakTipi', label: 'Emlak Tipi', placeholder: 'Daire / Villa / Arsa...' },
-    { key: 'metrekare', label: 'Metrekare (m²)', placeholder: 'Örn: 120', keyboard: 'numeric' },
-    { key: 'odaSayisi', label: 'Oda Sayısı', placeholder: 'Örn: 3+1' },
-    { key: 'binaYasi', label: 'Bina Yaşı', placeholder: 'Örn: 5', keyboard: 'numeric' },
-    { key: 'kat', label: 'Bulunduğu Kat', placeholder: 'Örn: 3', keyboard: 'numeric' },
+    { key: 'ilanTuru', label: 'İlan Türü', placeholder: 'Satılık / Kiralık', icon: 'pricetag-outline' },
+    { key: 'emlakTipi', label: 'Emlak Tipi', placeholder: 'Daire / Villa...', icon: 'home-outline' },
+    { key: 'metrekare', label: 'Metrekare (m²)', placeholder: '120', keyboard: 'numeric', icon: 'resize-outline' },
+    { key: 'odaSayisi', label: 'Oda Sayısı', placeholder: '3+1', icon: 'bed-outline' },
+    { key: 'binaYasi', label: 'Bina Yaşı', placeholder: '5', keyboard: 'numeric', icon: 'calendar-outline' },
+    { key: 'kat', label: 'Kat', placeholder: '3', keyboard: 'numeric', icon: 'layers-outline' },
   ],
   Araç: [
-    { key: 'aracTipi', label: 'Araç Tipi', placeholder: 'Otomobil / Motosiklet / SUV...' },
-    { key: 'marka', label: 'Marka', placeholder: 'Örn: Toyota' },
-    { key: 'model', label: 'Model', placeholder: 'Örn: Corolla' },
-    { key: 'yil', label: 'Yıl', placeholder: 'Örn: 2020', keyboard: 'numeric' },
-    { key: 'kilometre', label: 'Kilometre', placeholder: 'Örn: 50000', keyboard: 'numeric' },
-    { key: 'yakit', label: 'Yakıt Tipi', placeholder: 'Benzin / Dizel / Elektrik' },
-    { key: 'vites', label: 'Vites', placeholder: 'Manuel / Otomatik' },
+    { key: 'aracTipi', label: 'Araç Tipi', placeholder: 'Otomobil', icon: 'car-outline' },
+    { key: 'marka', label: 'Marka', placeholder: 'Toyota', icon: 'business-outline' },
+    { key: 'model', label: 'Model', placeholder: 'Corolla', icon: 'construct-outline' },
+    { key: 'yil', label: 'Yıl', placeholder: '2020', keyboard: 'numeric', icon: 'calendar-outline' },
+    { key: 'kilometre', label: 'Kilometre', placeholder: '50000', keyboard: 'numeric', icon: 'speedometer-outline' },
+    { key: 'yakit', label: 'Yakıt', placeholder: 'Benzin', icon: 'water-outline' },
+    { key: 'vites', label: 'Vites', placeholder: 'Manuel', icon: 'cog-outline' },
   ],
   'İkinci El': [
-    { key: 'urunTipi', label: 'Ürün Tipi', placeholder: 'Telefon / Bilgisayar / Giyim...' },
-    { key: 'marka', label: 'Marka', placeholder: 'Örn: Apple' },
-    { key: 'durum', label: 'Ürün Durumu', placeholder: 'Sıfır / Az Kullanılmış / İyi' },
+    { key: 'urunTipi', label: 'Ürün Tipi', placeholder: 'Telefon', icon: 'cube-outline' },
+    { key: 'marka', label: 'Marka', placeholder: 'Apple', icon: 'business-outline' },
+    { key: 'durum', label: 'Durum', placeholder: 'İyi', icon: 'star-outline' },
   ],
 };
 
@@ -49,9 +45,8 @@ const PLATFORMLAR = ['Sahibinden', 'Arabam.com', 'Letgo', 'Emlakjet'];
 
 function ekstraAlanlariCikar(ilan) {
   const alanlar = {};
-  if (!ilan || !ilan.kategori) return alanlar;
-  const tanimlar = KATEGORI_ALANLARI[ilan.kategori] || [];
-  tanimlar.forEach((a) => {
+  if (!ilan?.kategori) return alanlar;
+  (KATEGORI_ALANLARI[ilan.kategori] || []).forEach((a) => {
     if (ilan[a.key] != null && ilan[a.key] !== '') {
       alanlar[a.key] = String(ilan[a.key]);
     }
@@ -71,10 +66,6 @@ export default function AdminIlanDuzenleScreen({ navigation, route }) {
   );
   const [kaydediliyor, setKaydediliyor] = useState(false);
 
-  useEffect(() => {
-    navigation.setOptions({ title: 'İlanı Düzenle' });
-  }, [navigation]);
-
   const ekstraGuncelle = (key, value) => {
     setEkstraAlanlar((prev) => ({ ...prev, [key]: value }));
   };
@@ -87,18 +78,12 @@ export default function AdminIlanDuzenleScreen({ navigation, route }) {
   };
 
   const platformToggle = (ad) => {
-    setPlatformlar((prev) =>
-      prev.includes(ad) ? prev.filter((p) => p !== ad) : [...prev, ad]
-    );
+    setPlatformlar((prev) => (prev.includes(ad) ? prev.filter((p) => p !== ad) : [...prev, ad]));
   };
 
   const kaydet = async () => {
-    if (!kategori) {
-      Alert.alert('Uyarı', 'Kategori seçin.');
-      return;
-    }
-    if (!baslik.trim() || !aciklama.trim() || !fiyat.trim()) {
-      Alert.alert('Uyarı', 'Başlık, açıklama ve fiyat zorunludur.');
+    if (!kategori || !baslik.trim() || !aciklama.trim() || !fiyat.trim()) {
+      Alert.alert('Uyarı', 'Kategori, başlık, açıklama ve fiyat zorunludur.');
       return;
     }
     const fiyatSayi = Number(fiyat);
@@ -106,7 +91,6 @@ export default function AdminIlanDuzenleScreen({ navigation, route }) {
       Alert.alert('Fiyat hatalı', 'Geçerli bir fiyat girin.');
       return;
     }
-
     try {
       setKaydediliyor(true);
       await adminUpdateIlan(mevcut.id, {
@@ -133,41 +117,49 @@ export default function AdminIlanDuzenleScreen({ navigation, route }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.ustNot}>Admin düzenleme — sahip: {mevcut.ownerId || '—'}</Text>
+        <View style={styles.ustNot}>
+          <Ionicons name="shield-outline" size={14} color={colors.textMuted} />
+          <Text style={styles.ustNotText}>Admin düzenleme — sahip: {mevcut.ownerId || '—'}</Text>
+        </View>
 
-        <Text style={styles.bolum}>Kategori</Text>
+        <SectionTitle icon="grid-outline" title="Kategori" />
         <View style={styles.kategoriSatir}>
-          {KATEGORILER.map((k) => (
-            <TouchableOpacity
-              key={k.isim}
-              style={[styles.kategoriKart, kategori === k.isim && { borderColor: k.renk, borderWidth: 2 }]}
-              onPress={() => {
-                setKategori(k.isim);
-                setEkstraAlanlar({});
-              }}
-            >
-              <Text style={styles.kategoriEmoji}>{k.emoji}</Text>
-              <Text style={styles.kategoriIsim}>{k.isim}</Text>
-            </TouchableOpacity>
-          ))}
+          {KATEGORILER.map((isim) => {
+            const meta = getKategoriMeta(isim);
+            const secili = kategori === isim;
+            return (
+              <TouchableOpacity
+                key={isim}
+                style={[
+                  styles.kategoriKart,
+                  secili && { borderColor: meta.renk, borderWidth: 2, backgroundColor: meta.bg },
+                ]}
+                onPress={() => {
+                  setKategori(isim);
+                  setEkstraAlanlar({});
+                }}
+              >
+                <Text style={styles.kategoriEmoji}>{meta.emoji}</Text>
+                <Text style={styles.kategoriIsim}>{isim}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {kategori ? (
-          <>
-            <Text style={styles.label}>Başlık *</Text>
-            <TextInput style={styles.input} value={baslik} onChangeText={setBaslik} />
-
-            <Text style={styles.label}>Açıklama *</Text>
-            <TextInput
-              style={[styles.input, styles.textarea]}
+          <View style={styles.formKart}>
+            <AppInput label="Başlık *" icon="text-outline" value={baslik} onChangeText={setBaslik} />
+            <AppInput
+              label="Açıklama *"
+              icon="reader-outline"
               value={aciklama}
               onChangeText={setAciklama}
               multiline
+              style={{ minHeight: 80, textAlignVertical: 'top' }}
             />
-
-            <Text style={styles.label}>Fiyat (TL) *</Text>
-            <TextInput
-              style={styles.input}
+            <AppInput
+              label="Fiyat (TL) *"
+              icon="cash-outline"
               value={fiyat}
               onChangeText={fiyatGuncelle}
               keyboardType="number-pad"
@@ -175,50 +167,37 @@ export default function AdminIlanDuzenleScreen({ navigation, route }) {
 
             <Text style={styles.bolum}>Platformlar</Text>
             <View style={styles.platformWrap}>
-              {PLATFORMLAR.map((p) => (
-                <TouchableOpacity
-                  key={p}
-                  style={[styles.platformChip, platformlar.includes(p) && styles.platformChipAktif]}
-                  onPress={() => platformToggle(p)}
-                >
-                  <Text
-                    style={[
-                      styles.platformChipText,
-                      platformlar.includes(p) && styles.platformChipTextAktif,
-                    ]}
+              {PLATFORMLAR.map((p) => {
+                const secili = platformlar.includes(p);
+                return (
+                  <TouchableOpacity
+                    key={p}
+                    style={[styles.platformChip, secili && styles.platformChipAktif]}
+                    onPress={() => platformToggle(p)}
                   >
-                    {platformlar.includes(p) ? '✓ ' : ''}
-                    {p}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    {secili ? (
+                      <Ionicons name="checkmark" size={14} color={colors.primaryText} style={{ marginRight: 4 }} />
+                    ) : null}
+                    <Text style={[styles.platformChipText, secili && styles.platformChipTextAktif]}>{p}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             {KATEGORI_ALANLARI[kategori].map((alan) => (
-              <View key={alan.key}>
-                <Text style={styles.label}>{alan.label}</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder={alan.placeholder}
-                  value={ekstraAlanlar[alan.key] || ''}
-                  onChangeText={(val) => ekstraGuncelle(alan.key, val)}
-                  keyboardType={alan.keyboard || 'default'}
-                />
-              </View>
+              <AppInput
+                key={alan.key}
+                label={alan.label}
+                icon={alan.icon}
+                placeholder={alan.placeholder}
+                value={ekstraAlanlar[alan.key] || ''}
+                onChangeText={(val) => ekstraGuncelle(alan.key, val)}
+                keyboardType={alan.keyboard || 'default'}
+              />
             ))}
 
-            <TouchableOpacity
-              style={[styles.kaydetButon, kaydediliyor && styles.kaydetDisabled]}
-              onPress={kaydet}
-              disabled={kaydediliyor}
-            >
-              {kaydediliyor ? (
-                <ActivityIndicator color={colors.primaryText} />
-              ) : (
-                <Text style={styles.kaydetText}>Kaydet</Text>
-              )}
-            </TouchableOpacity>
-          </>
+            <PrimaryButton title="Kaydet" icon="save-outline" onPress={kaydet} loading={kaydediliyor} />
+          </View>
         ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -227,52 +206,43 @@ export default function AdminIlanDuzenleScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 16, paddingBottom: 40 },
-  ustNot: { fontSize: 12, color: colors.textMuted, marginBottom: 12 },
-  bolum: { fontSize: 17, fontWeight: '700', color: colors.text, marginBottom: 10, marginTop: 8 },
-  kategoriSatir: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
+  content: { padding: spacing.lg, paddingBottom: 40 },
+  ustNot: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.md },
+  ustNotText: { fontSize: 12, color: colors.textMuted },
+  kategoriSatir: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
   kategoriKart: {
     flex: 1,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    padding: 12,
+    padding: spacing.md,
     alignItems: 'center',
-    marginHorizontal: 4,
     backgroundColor: colors.surface,
+    ...shadow.card,
   },
   kategoriEmoji: { fontSize: 26 },
-  kategoriIsim: { fontSize: 12, fontWeight: '600', marginTop: 4 },
-  label: { fontSize: 14, fontWeight: '600', marginBottom: 6, color: colors.text },
-  input: {
+  kategoriIsim: { fontSize: 11, fontWeight: '700', marginTop: 4, textAlign: 'center' },
+  formKart: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
-    padding: 12,
-    borderRadius: radius.sm,
-    marginBottom: 14,
-    fontSize: 15,
+    ...shadow.card,
   },
-  textarea: { height: 90, textAlignVertical: 'top' },
-  platformWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+  bolum: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: spacing.sm },
+  platformWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: spacing.lg },
   platformChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
   },
   platformChipAktif: { backgroundColor: colors.primary, borderColor: colors.primaryDark },
   platformChipText: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
   platformChipTextAktif: { color: colors.primaryText },
-  kaydetButon: {
-    backgroundColor: colors.primary,
-    padding: 16,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  kaydetDisabled: { opacity: 0.7 },
-  kaydetText: { color: colors.primaryText, fontSize: 16, fontWeight: '700' },
 });

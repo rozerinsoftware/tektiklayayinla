@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow, getKategoriMeta, formatFiyat } from '../constants/theme';
 
 export default function IlanKart({ ilan, onPress, onSil, compact }) {
@@ -56,6 +57,7 @@ export default function IlanKart({ ilan, onPress, onSil, compact }) {
             }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
+            <Ionicons name="trash-outline" size={14} color={colors.danger} />
             <Text style={styles.silButonText}>Sil</Text>
           </TouchableOpacity>
         ) : null}
@@ -108,6 +110,9 @@ const styles = StyleSheet.create({
   platformChipText: { fontSize: 11, color: colors.textSecondary, fontWeight: '500' },
   platformFazla: { fontSize: 11, color: colors.textMuted },
   silButon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     alignSelf: 'flex-start',
     marginTop: 8,
     paddingVertical: 4,
