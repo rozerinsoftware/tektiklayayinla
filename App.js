@@ -13,6 +13,7 @@ import PlatformSecScreen from './screens/PlatformSecScreen';
 import YayinlaScreen from './screens/YayinlaScreen';
 import ProfilScreen from './screens/ProfilScreen';
 import AdminPanelScreen from './screens/AdminPanelScreen';
+import AdminIlanDuzenleScreen from './screens/AdminIlanDuzenleScreen';
 import IlanDetayScreen from './screens/IlanDetayScreen';
 import { colors, stackScreenOptions } from './constants/theme';
 
@@ -33,6 +34,11 @@ function ProfilFlow() {
         name="AdminPanel"
         component={AdminPanelScreen}
         options={{ title: 'Admin Paneli', ...stackScreenOptions }}
+      />
+      <ProfilStack.Screen
+        name="AdminIlanDuzenle"
+        component={AdminIlanDuzenleScreen}
+        options={{ title: 'İlanı Düzenle', ...stackScreenOptions }}
       />
     </ProfilStack.Navigator>
   );

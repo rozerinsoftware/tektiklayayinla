@@ -11,8 +11,9 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { adminDeleteIlan, adminGetAllIlanlar, adminGetAllUsers } from '../api';
+import { colors, radius, formatFiyat } from '../constants/theme';
 
-export default function AdminPanelScreen() {
+export default function AdminPanelScreen({ navigation }) {
   const [ilanlar, setIlanlar] = useState([]);
   const [kullanicilar, setKullanicilar] = useState([]);
   const [yukleniyor, setYukleniyor] = useState(true);
@@ -61,7 +62,7 @@ export default function AdminPanelScreen() {
   if (yukleniyor && ilanlar.length === 0 && kullanicilar.length === 0) {
     return (
       <View style={styles.merkez}>
-        <ActivityIndicator size="large" color="#1a73e8" />
+        <ActivityIndicator size="large" color={colors.primaryDark} />
       </View>
     );
   }
@@ -97,15 +98,23 @@ export default function AdminPanelScreen() {
             <View style={styles.kart}>
               <Text style={styles.kartBaslik}>{item.baslik}</Text>
               <Text style={styles.kartDetay}>{item.aciklama}</Text>
-              <Text style={styles.kartFiyat}>{item.fiyat} TL</Text>
+              <Text style={styles.kartFiyat}>{formatFiyat(item.fiyat)}</Text>
               <Text style={styles.kartMeta}>Kategori: {item.kategori || '—'}</Text>
               <Text style={styles.kartMeta}>Sahip: {item.ownerId || '—'}</Text>
-              <TouchableOpacity
-                style={styles.silButon}
-                onPress={() => ilanSil(item.id, item.baslik)}
-              >
-                <Text style={styles.silButonText}>Sil</Text>
-              </TouchableOpacity>
+              <View style={styles.aksiyonSatir}>
+                <TouchableOpacity
+                  style={styles.duzenleButon}
+                  onPress={() => navigation.navigate('AdminIlanDuzenle', { ilan: item })}
+                >
+                  <Text style={styles.duzenleButonText}>Düzenle</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.silButon}
+                  onPress={() => ilanSil(item.id, item.baslik)}
+                >
+                  <Text style={styles.silButonText}>Sil</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         />
@@ -139,9 +148,9 @@ const styles = StyleSheet.create({
   merkez: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   sekmeSatir: { flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderColor: '#eee' },
   sekme: { flex: 1, padding: 14, alignItems: 'center' },
-  sekmeAktif: { borderBottomWidth: 3, borderBottomColor: '#1a73e8' },
+  sekmeAktif: { borderBottomWidth: 3, borderBottomColor: colors.primaryDark },
   sekmeText: { color: '#666', fontWeight: '600' },
-  sekmeTextAktif: { color: '#1a73e8' },
+  sekmeTextAktif: { color: colors.primaryText, fontWeight: '700' },
   kart: {
     backgroundColor: '#fff',
     margin: 12,
@@ -154,14 +163,23 @@ const styles = StyleSheet.create({
   kartDetay: { color: '#666', marginBottom: 4 },
   kartFiyat: { color: '#e74c3c', fontWeight: 'bold', marginBottom: 4 },
   kartMeta: { fontSize: 12, color: '#999', marginBottom: 2 },
-  silButon: {
-    marginTop: 10,
-    backgroundColor: '#fee',
+  aksiyonSatir: { flexDirection: 'row', gap: 10, marginTop: 12 },
+  duzenleButon: {
+    flex: 1,
+    backgroundColor: colors.primary,
     padding: 10,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     alignItems: 'center',
   },
-  silButonText: { color: '#e74c3c', fontWeight: 'bold' },
+  duzenleButonText: { color: colors.primaryText, fontWeight: '700' },
+  silButon: {
+    flex: 1,
+    backgroundColor: '#FEE2E2',
+    padding: 10,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+  },
+  silButonText: { color: colors.danger, fontWeight: '700' },
   rolBadge: {
     alignSelf: 'flex-start',
     marginTop: 8,

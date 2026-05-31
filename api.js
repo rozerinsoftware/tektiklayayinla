@@ -138,6 +138,34 @@ export const adminDeleteIlan = async (id) => {
   return { message: 'İlan silindi' };
 };
 
+const DETAY_ALAN_ANAHTARLARI = new Set([
+  'ilanTuru', 'emlakTipi', 'metrekare', 'odaSayisi', 'binaYasi', 'kat',
+  'aracTipi', 'marka', 'model', 'yil', 'kilometre', 'yakit', 'vites',
+  'urunTipi', 'durum',
+]);
+
+export const adminUpdateIlan = async (id, ilan) => {
+  await requireAdmin();
+  const kaynak = ilan || {};
+  const { baslik, aciklama, fiyat, platformlar, kategori, ...rest } = kaynak;
+  const detay = {};
+  Object.entries(rest).forEach(([key, value]) => {
+    if (DETAY_ALAN_ANAHTARLARI.has(key) && value != null && String(value).trim() !== '') {
+      detay[key] = value;
+    }
+  });
+  await updateDoc(doc(getDb(), 'ilanlar', String(id)), {
+    baslik,
+    aciklama,
+    fiyat,
+    platformlar: platformlar || [],
+    kategori,
+    detay,
+    updatedAt: serverTimestamp(),
+  });
+  return { id, baslik, aciklama, fiyat, platformlar, kategori, ...detay };
+};
+
 export const adminGetAllUsers = async () => {
   await requireAdmin();
   const snap = await getDocs(usersCol());
