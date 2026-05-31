@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { colors, radius } from '../constants/theme';
 
 const KATEGORILER = [
   { isim: 'Emlak', emoji: '🏠', renk: '#00B894' },
@@ -53,29 +54,43 @@ export default function IlanEkleScreen({ navigation }) {
     setEkstraAlanlar(prev => ({ ...prev, [key]: value }));
   };
 
-  const parseFiyatTl = (raw) => {
-    let s = String(raw ?? '').trim().replace(/\s/g, '');
-    if (!s) return NaN;
-    const lastComma = s.lastIndexOf(',');
-    const lastDot = s.lastIndexOf('.');
-    let normalized;
-    if (lastComma > lastDot) {
-      normalized = s.replace(/\./g, '').replace(',', '.');
-    } else {
-      normalized = s.replace(/,/g, '');
+  const fiyatGuncelle = (text) => {
+    const harfVar = /[a-zA-ZğüşıöçĞÜŞİÖÇ]/.test(text);
+    const sadeceRakam = text.replace(/\D/g, '');
+    if (harfVar) {
+      Alert.alert('Fiyat hatalı', 'Fiyat alanına sadece rakam girebilirsiniz.');
     }
-    const n = Number(normalized);
+    setFiyat(sadeceRakam);
+  };
+
+  const parseFiyatTl = (raw) => {
+    const s = String(raw ?? '').trim().replace(/\D/g, '');
+    if (!s) return NaN;
+    const n = Number(s);
     return Number.isFinite(n) ? n : NaN;
   };
 
   const devamEt = () => {
-    if (!kategori || !baslik.trim() || !aciklama.trim() || !String(fiyat).trim()) {
-      Alert.alert('Hata', 'Lütfen tüm zorunlu alanları doldurun!');
+    if (!kategori) {
+      Alert.alert('Uyarı', 'Lütfen bir kategori seçin (Emlak, Araç veya İkinci El).');
       return;
     }
+    if (!baslik.trim()) {
+      Alert.alert('Uyarı', 'İlan başlığı boş bırakılamaz.');
+      return;
+    }
+    if (!aciklama.trim()) {
+      Alert.alert('Uyarı', 'Açıklama boş bırakılamaz.');
+      return;
+    }
+    if (!String(fiyat).trim()) {
+      Alert.alert('Uyarı', 'Fiyat alanı boş bırakılamaz.');
+      return;
+    }
+
     const fiyatSayi = parseFiyatTl(fiyat);
     if (!Number.isFinite(fiyatSayi) || fiyatSayi <= 0) {
-      Alert.alert('Hata', 'Fiyat geçerli bir pozitif sayı olmalı (örn: 15000 veya 1.500.000).');
+      Alert.alert('Fiyat hatalı', 'Geçerli bir fiyat girin (sadece rakam).');
       return;
     }
     if (fiyatSayi < 10) {
@@ -136,15 +151,16 @@ export default function IlanEkleScreen({ navigation }) {
               <Text style={styles.label}>Fiyat (TL) *</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Örn: 15000"
+                placeholder="Örn: 15000 (sadece rakam)"
                 value={fiyat}
-                onChangeText={setFiyat}
-                keyboardType="numeric"
+                onChangeText={fiyatGuncelle}
+                keyboardType="number-pad"
+                maxLength={12}
               />
 
               {KATEGORI_ALANLARI[kategori].map((alan) => (
                 <View key={alan.key}>
-                  <Text style={styles.label}>{alan.label}</Text>
+                  <Text style={styles.label}>{alan.label} (isteğe bağlı)</Text>
                   <TextInput
                     style={styles.input}
                     placeholder={alan.placeholder}
@@ -166,16 +182,40 @@ export default function IlanEkleScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 20, paddingBottom: 40 },
-  baslik: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, marginTop: 10, color: '#333' },
+  baslik: { fontSize: 18, fontWeight: '700', marginBottom: 15, marginTop: 10, color: colors.text },
   kategoriSatir: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-  kategoriKart: { flex: 1, borderWidth: 1, borderColor: '#eee', borderRadius: 12, padding: 15, alignItems: 'center', marginHorizontal: 5, backgroundColor: '#f9f9f9' },
+  kategoriKart: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: 15,
+    alignItems: 'center',
+    marginHorizontal: 5,
+    backgroundColor: colors.surface,
+  },
   kategoriEmoji: { fontSize: 30, marginBottom: 5 },
-  kategoriIsim: { fontSize: 13, fontWeight: '600', color: '#333' },
-  label: { fontSize: 15, fontWeight: '600', marginBottom: 5, color: '#333' },
-  input: { borderWidth: 1, borderColor: '#ddd', padding: 12, borderRadius: 8, marginBottom: 15, fontSize: 15 },
+  kategoriIsim: { fontSize: 13, fontWeight: '600', color: colors.text },
+  label: { fontSize: 15, fontWeight: '600', marginBottom: 5, color: colors.text },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: 12,
+    borderRadius: radius.sm,
+    marginBottom: 15,
+    fontSize: 15,
+  },
   textarea: { height: 80, textAlignVertical: 'top' },
-  buton: { backgroundColor: '#1a73e8', padding: 15, borderRadius: 10, alignItems: 'center', marginTop: 5, marginBottom: 30 },
-  butonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  buton: {
+    backgroundColor: colors.primary,
+    padding: 16,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    marginTop: 5,
+    marginBottom: 30,
+  },
+  butonText: { color: colors.primaryText, fontSize: 16, fontWeight: '700' },
 });

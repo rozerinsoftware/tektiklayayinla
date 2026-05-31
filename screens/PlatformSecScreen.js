@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
 import { addIlan } from '../api';
+import { colors, radius } from '../constants/theme';
 
 const PLATFORMLAR = [
   { isim: 'Sahibinden', renk: '#FFD700', logo: require('../assets/sahibinden.png') },
@@ -27,10 +28,20 @@ export default function PlatformSecScreen({ navigation, route }) {
       Alert.alert('Hata', 'En az bir platform seçin!');
       return;
     }
+    const ilan = yeniIlan || {};
+    if (!ilan.kategori || !String(ilan.baslik || '').trim() || !String(ilan.aciklama || '').trim()) {
+      Alert.alert('Uyarı', 'İlan bilgileri eksik. Lütfen başlık, açıklama ve kategoriyi doldurun.');
+      return;
+    }
+    const fiyatSayi = Number(String(ilan.fiyat || '').replace(/\D/g, ''));
+    if (!Number.isFinite(fiyatSayi) || fiyatSayi <= 0) {
+      Alert.alert('Fiyat hatalı', 'Geçerli bir fiyat girilmeden ilan eklenemez.');
+      return;
+    }
     if (yayinlaniyor) return;
     try {
       setYayinlaniyor(true);
-      const tamamlananIlan = { ...yeniIlan, platformlar: secilenler };
+      const tamamlananIlan = { ...ilan, platformlar: secilenler };
       await addIlan(tamamlananIlan);
       navigation.navigate('Yayinla', { ilan: tamamlananIlan });
     } catch (error) {
@@ -76,14 +87,29 @@ export default function PlatformSecScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5', padding: 20 },
-  baslik: { fontSize: 22, fontWeight: 'bold', marginBottom: 5 },
-  aciklama: { color: '#666', marginBottom: 20 },
-  platformKart: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee', padding: 15, borderRadius: 12, marginBottom: 12, flexDirection: 'row', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: colors.background, padding: 20 },
+  baslik: { fontSize: 22, fontWeight: '700', marginBottom: 5, color: colors.text },
+  aciklama: { color: colors.textSecondary, marginBottom: 20 },
+  platformKart: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 15,
+    borderRadius: radius.md,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   logo: { width: 50, height: 50, marginRight: 15, borderRadius: 8 },
-  platformText: { fontSize: 16, fontWeight: '600', flex: 1, color: '#333' },
+  platformText: { fontSize: 16, fontWeight: '600', flex: 1, color: colors.text },
   check: { fontSize: 20 },
-  yayinlaButon: { backgroundColor: '#2d3436', padding: 15, borderRadius: 12, alignItems: 'center', marginTop: 10 },
+  yayinlaButon: {
+    backgroundColor: colors.primary,
+    padding: 16,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    marginTop: 10,
+  },
   yayinlaButonDisabled: { opacity: 0.6 },
-  yayinlaButonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  yayinlaButonText: { color: colors.primaryText, fontSize: 16, fontWeight: '700' },
 });

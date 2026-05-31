@@ -3,13 +3,28 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
+  query,
   serverTimestamp,
+  setDoc,
   updateDoc,
+  where,
 } from 'firebase/firestore';
+import { getCurrentUserId, getFirebaseAuth, waitForAuth } from './auth';
 import { getDb } from './firebase';
 
 const ilanCol = () => collection(getDb(), 'ilanlar');
+const usersCol = () => collection(getDb(), 'users');
+
+async function requireUserId() {
+  await waitForAuth();
+  const uid = getCurrentUserId();
+  if (!uid) {
+    throw new Error('İlan işlemi için giriş yapmalısınız.');
+  }
+  return uid;
+}
 
 const docToIlan = (snap) => {
   const data = snap.data() || {};
@@ -22,13 +37,17 @@ const docToIlan = (snap) => {
 };
 
 export const getIlanlar = async () => {
-  const snap = await getDocs(ilanCol());
+  const uid = await requireUserId();
+  const q = query(ilanCol(), where('ownerId', '==', uid));
+  const snap = await getDocs(q);
   return snap.docs.map(docToIlan);
 };
 
 export const addIlan = async (ilan) => {
+  const uid = await requireUserId();
   const { baslik, aciklama, fiyat, platformlar, ...detay } = ilan || {};
   const ref = await addDoc(ilanCol(), {
+    ownerId: uid,
     baslik,
     aciklama,
     fiyat,
@@ -40,6 +59,7 @@ export const addIlan = async (ilan) => {
 };
 
 export const updateIlan = async (id, ilan) => {
+  await requireUserId();
   const { baslik, aciklama, fiyat, platformlar, ...detay } = ilan || {};
   await updateDoc(doc(getDb(), 'ilanlar', String(id)), {
     baslik,
@@ -53,6 +73,73 @@ export const updateIlan = async (id, ilan) => {
 };
 
 export const deleteIlan = async (id) => {
+  await requireUserId();
   await deleteDoc(doc(getDb(), 'ilanlar', String(id)));
   return { message: 'İlan silindi' };
+};
+
+// ——— Kullanıcı profili ———
+
+export async function createUserProfile({ ad, soyad, email }) {
+  const uid = await requireUserId();
+  await setDoc(doc(getDb(), 'users', uid), {
+    email: String(email || getFirebaseAuth().currentUser?.email || '').trim(),
+    ad: String(ad || '').trim(),
+    soyad: String(soyad || '').trim(),
+    role: 'user',
+    createdAt: serverTimestamp(),
+  });
+}
+
+export async function ensureUserProfile({ ad, soyad, email } = {}) {
+  const uid = await requireUserId();
+  const ref = doc(getDb(), 'users', uid);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return snap.data();
+  await setDoc(ref, {
+    email: String(email || getFirebaseAuth().currentUser?.email || '').trim(),
+    ad: String(ad || '').trim(),
+    soyad: String(soyad || '').trim(),
+    role: 'user',
+    createdAt: serverTimestamp(),
+  });
+  return { role: 'user' };
+}
+
+export async function getCurrentUserRole() {
+  const uid = await requireUserId();
+  const snap = await getDoc(doc(getDb(), 'users', uid));
+  if (!snap.exists()) return 'user';
+  return snap.data()?.role || 'user';
+}
+
+export async function isCurrentUserAdmin() {
+  return (await getCurrentUserRole()) === 'admin';
+}
+
+async function requireAdmin() {
+  const role = await getCurrentUserRole();
+  if (role !== 'admin') {
+    throw new Error('Bu işlem için admin yetkisi gerekir.');
+  }
+}
+
+// ——— Admin ———
+
+export const adminGetAllIlanlar = async () => {
+  await requireAdmin();
+  const snap = await getDocs(ilanCol());
+  return snap.docs.map(docToIlan);
+};
+
+export const adminDeleteIlan = async (id) => {
+  await requireAdmin();
+  await deleteDoc(doc(getDb(), 'ilanlar', String(id)));
+  return { message: 'İlan silindi' };
+};
+
+export const adminGetAllUsers = async () => {
+  await requireAdmin();
+  const snap = await getDocs(usersCol());
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
