@@ -39,7 +39,11 @@ export default function KayitScreen({ navigation }) {
       setYukleniyor(true);
       await signUp({ email, password: sifre, ad, soyad });
       await createUserProfile({ email, ad, soyad });
-      navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.replace('Main');
+      }
     } catch (error) {
       const kod = error?.code || '';
       let mesaj = error?.message || 'Kayıt oluşturulamadı.';

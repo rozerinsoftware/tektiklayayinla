@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { getCurrentUserId } from '../auth';
+import { girisIste } from '../utils/requireAuth';
 import {
   View,
   Text,
@@ -41,6 +44,15 @@ const KATEGORI_ALANLARI = {
 };
 
 export default function IlanEkleScreen({ navigation }) {
+  useFocusEffect(
+    useCallback(() => {
+      if (!getCurrentUserId()) {
+        girisIste(navigation);
+        navigation.getParent()?.navigate('Ana Sayfa');
+      }
+    }, [navigation])
+  );
+
   const [kategori, setKategori] = useState(null);
   const [baslik, setBaslik] = useState('');
   const [aciklama, setAciklama] = useState('');
@@ -59,6 +71,10 @@ export default function IlanEkleScreen({ navigation }) {
   };
 
   const devamEt = () => {
+    if (!getCurrentUserId()) {
+      girisIste(navigation);
+      return;
+    }
     if (!kategori) {
       Alert.alert('Uyarı', 'Lütfen bir kategori seçin.');
       return;

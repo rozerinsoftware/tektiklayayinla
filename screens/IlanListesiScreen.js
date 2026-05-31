@@ -12,10 +12,11 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getIlanlar, deleteIlan } from '../api';
-import IlanKart from '../components/IlanKart';
+import { getTumIlanlar, deleteIlan } from '../api';
+import { getCurrentUserId } from '../auth';
+import { girisIste } from '../utils/requireAuth';
 import { colors, radius, spacing, KATEGORI_META } from '../constants/theme';
-
+import IlanKart from '../components/IlanKart';
 export default function IlanListesiScreen({ navigation, route }) {
   const aramaModu = route.params?.aramaModu === true;
   const [ilanlar, setIlanlar] = useState([]);
@@ -26,11 +27,11 @@ export default function IlanListesiScreen({ navigation, route }) {
   const ilanlariGetir = async () => {
     try {
       setYukleniyor(true);
-      const data = await getIlanlar();
+      const data = await getTumIlanlar();
       setIlanlar(data);
     } catch (error) {
       setIlanlar([]);
-      Alert.alert('Veri Hatası', error?.message || 'İlanlar yüklenemedi.');
+      if (__DEV__) console.warn('İlanlar yüklenemedi:', error?.message);
     } finally {
       setYukleniyor(false);
     }
@@ -77,6 +78,7 @@ export default function IlanListesiScreen({ navigation, route }) {
   };
 
   const yeniIlan = () => {
+    if (!girisIste(navigation)) return;
     const tabNav = navigation.getParent();
     if (tabNav) {
       tabNav.navigate('İlan Ver', { screen: 'IlanEkle' });
@@ -84,6 +86,8 @@ export default function IlanListesiScreen({ navigation, route }) {
     }
     navigation.navigate('IlanEkle');
   };
+
+  const uid = getCurrentUserId();
 
   const listeBos = () => (
     <View style={styles.bos}>
@@ -119,6 +123,8 @@ export default function IlanListesiScreen({ navigation, route }) {
           style={styles.aramaInput}
           placeholder="Kelime, fiyat veya açıklama ara..."
           placeholderTextColor={colors.textMuted}
+          selectionColor={colors.cursor}
+          cursorColor={colors.cursor}
           value={arama}
           onChangeText={setArama}
         />
@@ -170,7 +176,7 @@ export default function IlanListesiScreen({ navigation, route }) {
             <IlanKart
               ilan={item}
               onPress={() => navigation.navigate('IlanDetay', { ilan: item })}
-              onSil={() => ilanSil(item.id)}
+              onSil={uid && item.ownerId === uid ? () => ilanSil(item.id) : undefined}
             />
           )}
         />
@@ -224,7 +230,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  kategoriChipAktif: { backgroundColor: colors.primaryText, borderColor: colors.primaryText },
+  kategoriChipAktif: { backgroundColor: colors.primary, borderColor: colors.primaryDark },
   kategoriChipEmoji: { fontSize: 14, marginRight: 4 },
   kategoriChipText: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
   kategoriChipTextAktif: { color: colors.surface },
@@ -260,5 +266,5 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.primaryDark,
   },
-  fabText: { fontSize: 28, fontWeight: '300', color: colors.primaryText, marginTop: -2 },
+  fabText: { fontSize: 28, fontWeight: '300', color: '#FFFFFF', marginTop: -2 },
 });

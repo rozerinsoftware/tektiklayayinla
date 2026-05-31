@@ -1,8 +1,9 @@
-/** Sahibinden tarzı ilan uygulaması renk paleti */
+/** İlan uygulaması — mavi ana tema */
 export const colors = {
-  primary: '#FFC800',
-  primaryDark: '#E6B400',
-  primaryText: '#1A1A1A',
+  primary: '#2563EB',
+  primaryDark: '#1D4ED8',
+  primaryLight: '#DBEAFE',
+  primaryText: '#FFFFFF',
   background: '#F0F2F5',
   surface: '#FFFFFF',
   border: '#E4E7EC',
@@ -11,9 +12,10 @@ export const colors = {
   textMuted: '#9CA3AF',
   price: '#1A1A1A',
   link: '#2563EB',
+  cursor: '#2563EB',
   success: '#059669',
   danger: '#DC2626',
-  headerBg: '#FFC800',
+  headerBg: '#2563EB',
 };
 
 export const spacing = {
@@ -50,7 +52,7 @@ export const shadow = {
 };
 
 export const tabBarOptions = {
-  tabBarActiveTintColor: colors.primaryText,
+  tabBarActiveTintColor: colors.primary,
   tabBarInactiveTintColor: colors.textMuted,
   tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
 };
@@ -58,7 +60,7 @@ export const tabBarOptions = {
 export const stackScreenOptions = {
   headerStyle: { backgroundColor: colors.headerBg },
   headerTintColor: colors.primaryText,
-  headerTitleStyle: { fontWeight: '700', fontSize: 17 },
+  headerTitleStyle: { fontWeight: '700', fontSize: 17, color: colors.primaryText },
   headerShadowVisible: false,
   contentStyle: { backgroundColor: colors.background },
 };

@@ -24,6 +24,9 @@ export default function IlanKart({ ilan, onPress, onSil, compact }) {
             <Text style={styles.kategoriEtiketText}>{ilan.kategori}</Text>
           </View>
         ) : null}
+        <View style={styles.tapIcon}>
+          <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+        </View>
       </View>
 
       <View style={styles.icerik}>
@@ -88,12 +91,27 @@ const styles = StyleSheet.create({
   gorselEmoji: { fontSize: 40 },
   kategoriEtiket: {
     position: 'absolute',
-    bottom: 8,
+    bottom: 36,
+    left: 8,
+    right: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: radius.pill,
+    alignItems: 'center',
   },
   kategoriEtiketText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  tapIcon: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadow.soft,
+  },
   icerik: { flex: 1, padding: 12, justifyContent: 'center' },
   fiyat: { fontSize: 18, fontWeight: '800', color: colors.price, marginBottom: 4 },
   baslik: { fontSize: 15, fontWeight: '600', color: colors.text, lineHeight: 20 },

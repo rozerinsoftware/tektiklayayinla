@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   },
   sekmeAktif: { borderBottomWidth: 3, borderBottomColor: colors.primary },
   sekmeText: { color: colors.textMuted, fontWeight: '600', fontSize: 14 },
-  sekmeTextAktif: { color: colors.primaryText, fontWeight: '700' },
+  sekmeTextAktif: { color: colors.primary, fontWeight: '700' },
   listContent: { padding: spacing.md, paddingBottom: 24 },
   ilanSatir: { marginBottom: spacing.lg },
   ilanKartWrap: { marginBottom: spacing.sm },

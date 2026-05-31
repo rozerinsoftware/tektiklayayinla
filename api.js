@@ -36,6 +36,17 @@ const docToIlan = (snap) => {
   };
 };
 
+/** Ana sayfa — giriş gerekmez (Firestore kurallarında herkese okuma açık olmalı) */
+export const getTumIlanlar = async () => {
+  const snap = await getDocs(ilanCol());
+  const liste = snap.docs.map(docToIlan);
+  return liste.sort((a, b) => {
+    const ta = a.createdAt?.toMillis?.() ?? a.createdAt ?? 0;
+    const tb = b.createdAt?.toMillis?.() ?? b.createdAt ?? 0;
+    return tb - ta;
+  });
+};
+
 export const getIlanlar = async () => {
   const uid = await requireUserId();
   const q = query(ilanCol(), where('ownerId', '==', uid));

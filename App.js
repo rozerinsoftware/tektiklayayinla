@@ -2,8 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Text } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import GirisScreen from './screens/GirisScreen';
@@ -16,15 +15,9 @@ import ProfilScreen from './screens/ProfilScreen';
 import AdminPanelScreen from './screens/AdminPanelScreen';
 import AdminIlanDuzenleScreen from './screens/AdminIlanDuzenleScreen';
 import IlanDetayScreen from './screens/IlanDetayScreen';
+import { getCurrentUserId } from './auth';
+import { girisIste } from './utils/requireAuth';
 import { colors, stackScreenOptions, tabBarOptions } from './constants/theme';
-
-function TabIcon({ name, focused, size = 24 }) {
-  return (
-    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <Ionicons name={focused ? name : `${name}-outline`} size={size} color={focused ? colors.primaryText : colors.textMuted} />
-    </View>
-  );
-}
 
 const Stack = createNativeStackNavigator();
 const ProfilStack = createNativeStackNavigator();
@@ -109,16 +102,24 @@ function TabNavigator() {
         headerShown: false,
       }}
     >
-      <Tab.Screen 
-        name="Ana Sayfa" 
+      <Tab.Screen
+        name="Ana Sayfa"
         component={AnaSayfa}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} /> }}
+        options={{ tabBarIcon: () => <Text style={{ fontSize: 22 }}>🏠</Text> }}
       />
-      <Tab.Screen 
-        name="İlan Ver" 
+      <Tab.Screen
+        name="İlan Ver"
         component={IlanFlow}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            if (!getCurrentUserId()) {
+              e.preventDefault();
+              girisIste(navigation);
+            }
+          },
+        })}
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon name="add-circle" focused={focused} size={28} />,
+          tabBarIcon: () => <Text style={{ fontSize: 28 }}>➕</Text>,
           tabBarStyle: {
             paddingBottom: altBosluk + 6,
             paddingTop: 10,
@@ -126,15 +127,15 @@ function TabNavigator() {
           },
         }}
       />
-      <Tab.Screen 
-        name="Ara" 
+      <Tab.Screen
+        name="Ara"
         component={AraSayfa}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon name="search" focused={focused} /> }}
+        options={{ tabBarIcon: () => <Text style={{ fontSize: 22 }}>🔍</Text> }}
       />
-      <Tab.Screen 
-        name="Profilim" 
+      <Tab.Screen
+        name="Profilim"
         component={ProfilFlow}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon name="person" focused={focused} />, headerShown: false }}
+        options={{ tabBarIcon: () => <Text style={{ fontSize: 22 }}>👤</Text>, headerShown: false }}
       />
     </Tab.Navigator>
   );
@@ -143,25 +144,17 @@ function TabNavigator() {
 export default function App() {
   return (
     <SafeAreaProvider>
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Giris">
-        <Stack.Screen 
-          name="Giris" 
-          component={GirisScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Kayit"
-          component={KayitScreen}
-          options={{ title: 'Hesap Oluştur', ...stackScreenOptions }}
-        />
-        <Stack.Screen 
-          name="Main" 
-          component={TabNavigator}
-          options={{ headerShown: false }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Main">
+          <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
+          <Stack.Screen name="Giris" component={GirisScreen} options={{ headerShown: false }} />
+          <Stack.Screen
+            name="Kayit"
+            component={KayitScreen}
+            options={{ title: 'Hesap Oluştur', ...stackScreenOptions }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
     </SafeAreaProvider>
   );
 }

@@ -16,7 +16,34 @@ import { ensureUserProfile } from '../api';
 import { AppInput, PrimaryButton } from '../components/ui';
 import { colors, radius, shadow, spacing } from '../constants/theme';
 
-export default function GirisScreen({ navigation }) {
+function girisSonrasiGit(navigation, afterLogin) {
+  if (afterLogin === 'IlanVer') {
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: 'Main',
+          state: {
+            routes: [
+              { name: 'Ana Sayfa' },
+              { name: 'İlan Ver', state: { routes: [{ name: 'IlanEkle' }] } },
+            ],
+            index: 1,
+          },
+        },
+      ],
+    });
+    return;
+  }
+  if (navigation.canGoBack()) {
+    navigation.goBack();
+  } else {
+    navigation.replace('Main');
+  }
+}
+
+export default function GirisScreen({ navigation, route }) {
+  const afterLogin = route.params?.afterLogin;
   const [email, setEmail] = useState('');
   const [sifre, setSifre] = useState('');
   const [yukleniyor, setYukleniyor] = useState(false);
@@ -30,7 +57,7 @@ export default function GirisScreen({ navigation }) {
       setYukleniyor(true);
       await signIn(email, sifre);
       await ensureUserProfile({ email });
-      navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+      girisSonrasiGit(navigation, afterLogin);
     } catch (error) {
       const kod = error?.code || '';
       let mesaj = error?.message || 'Giriş yapılamadı.';
@@ -53,7 +80,7 @@ export default function GirisScreen({ navigation }) {
       >
         <ScrollView contentContainerStyle={styles.icerik} keyboardShouldPersistTaps="handled">
           <View style={styles.logoKutu}>
-            <Ionicons name="megaphone" size={44} color={colors.primaryText} />
+            <Text style={styles.tiklamaEmoji}>👆</Text>
           </View>
 
           <Text style={styles.baslik}>TekTıklaYayınla</Text>
@@ -85,6 +112,14 @@ export default function GirisScreen({ navigation }) {
             <Text style={styles.kayitLinkText}>Hesap Oluştur</Text>
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={styles.geriAna}
+            onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.replace('Main'))}
+          >
+            <Ionicons name="arrow-back" size={18} color={colors.primaryText} />
+            <Text style={styles.geriAnaText}>Ana sayfaya dön</Text>
+          </TouchableOpacity>
+
           <View style={styles.platformSatir}>
             {['storefront-outline', 'car-outline', 'cube-outline'].map((icon) => (
               <View key={icon} style={styles.platformIcon}>
@@ -113,6 +148,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     ...shadow.card,
   },
+  tiklamaEmoji: { fontSize: 48 },
   baslik: {
     fontSize: 28,
     fontWeight: '800',
@@ -141,6 +177,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   kayitLinkText: { color: colors.primaryText, fontSize: 16, fontWeight: '700' },
+  geriAna: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.lg,
+    gap: 6,
+  },
+  geriAnaText: { color: colors.primaryText, fontSize: 15, fontWeight: '600', opacity: 0.85 },
   platformSatir: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -151,7 +195,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: radius.md,
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: 'rgba(255,255,255,0.25)',
     alignItems: 'center',
     justifyContent: 'center',
   },

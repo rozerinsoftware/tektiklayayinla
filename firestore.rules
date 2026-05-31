@@ -27,8 +27,7 @@ service cloud.firestore {
     }
 
     match /ilanlar/{ilanId} {
-      allow read: if isSignedIn()
-        && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow read: if true;
 
       allow create: if isSignedIn()
         && request.resource.data.ownerId == request.auth.uid

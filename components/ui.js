@@ -63,6 +63,8 @@ export function AppInput({ label, icon, style, ...props }) {
         <TextInput
           style={[styles.input, style]}
           placeholderTextColor={colors.textMuted}
+          selectionColor={colors.cursor}
+          cursorColor={colors.cursor}
           {...props}
         />
       </View>
@@ -76,7 +78,7 @@ export function SectionTitle({ icon, title, subtitle }) {
       <View style={styles.sectionRow}>
         {icon ? (
           <View style={styles.sectionIconBg}>
-            <Ionicons name={icon} size={18} color={colors.primaryText} />
+            <Ionicons name={icon} size={18} color={colors.primary} />
           </View>
         ) : null}
         <View style={styles.sectionText}>
@@ -135,7 +137,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: radius.sm,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,

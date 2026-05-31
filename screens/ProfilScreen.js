@@ -4,16 +4,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { getFirebaseAuth, signOutUser } from '../auth';
 import { isCurrentUserAdmin } from '../api';
+import { kokNavigasyon } from '../utils/requireAuth';
 import { Card, PrimaryButton, SecondaryButton } from '../components/ui';
 import { colors, radius, shadow, spacing } from '../constants/theme';
 
 export default function ProfilScreen({ navigation }) {
   const [admin, setAdmin] = useState(false);
   const [yukleniyor, setYukleniyor] = useState(true);
-  const kullanici = getFirebaseAuth().currentUser;
+  const [kullanici, setKullanici] = useState(getFirebaseAuth().currentUser);
 
   useFocusEffect(
     useCallback(() => {
+      const auth = getFirebaseAuth();
+      setKullanici(auth.currentUser);
+      if (!auth.currentUser) {
+        setAdmin(false);
+        setYukleniyor(false);
+        return;
+      }
       let aktif = true;
       (async () => {
         try {
@@ -32,11 +40,7 @@ export default function ProfilScreen({ navigation }) {
     }, [])
   );
 
-  const kokNavigasyon = () => {
-    let nav = navigation;
-    while (nav.getParent()) nav = nav.getParent();
-    return nav;
-  };
+  const rootNav = () => kokNavigasyon(navigation);
 
   const cikisYap = () => {
     Alert.alert('Çıkış', 'Hesabınızdan çıkmak istiyor musunuz?', [
@@ -46,11 +50,38 @@ export default function ProfilScreen({ navigation }) {
         style: 'destructive',
         onPress: async () => {
           await signOutUser();
-          kokNavigasyon().reset({ index: 0, routes: [{ name: 'Giris' }] });
+          setKullanici(null);
+          setAdmin(false);
         },
       },
     ]);
   };
+
+  if (!kullanici) {
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <Card style={styles.profilKart}>
+          <View style={styles.avatar}>
+            <Ionicons name="person-outline" size={40} color={colors.textMuted} />
+          </View>
+          <Text style={styles.isim}>Hoş geldiniz</Text>
+          <Text style={styles.misafirMetin}>
+            İlan eklemek veya ilanlarınızı yönetmek için giriş yapın.
+          </Text>
+        </Card>
+        <PrimaryButton
+          title="Giriş Yap"
+          icon="log-in-outline"
+          onPress={() => rootNav().navigate('Giris')}
+        />
+        <SecondaryButton
+          title="Hesap Oluştur"
+          icon="person-add-outline"
+          onPress={() => rootNav().navigate('Kayit')}
+        />
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -58,10 +89,10 @@ export default function ProfilScreen({ navigation }) {
         <View style={styles.avatar}>
           <Ionicons name="person" size={40} color={colors.primaryText} />
         </View>
-        <Text style={styles.isim}>{kullanici?.displayName || 'Kullanıcı'}</Text>
+        <Text style={styles.isim}>{kullanici.displayName || 'Kullanıcı'}</Text>
         <View style={styles.emailSatir}>
           <Ionicons name="mail-outline" size={16} color={colors.textMuted} />
-          <Text style={styles.email}>{kullanici?.email || ''}</Text>
+          <Text style={styles.email}>{kullanici.email || ''}</Text>
         </View>
         {admin ? (
           <View style={styles.adminBadge}>
@@ -101,6 +132,13 @@ const styles = StyleSheet.create({
     ...shadow.soft,
   },
   isim: { fontSize: 22, fontWeight: '800', color: colors.text },
+  misafirMetin: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 20,
+  },
   emailSatir: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
   email: { fontSize: 14, color: colors.textSecondary },
   adminBadge: {

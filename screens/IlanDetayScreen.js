@@ -8,6 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { deleteIlan } from '../api';
+import { getCurrentUserId } from '../auth';
 import { colors, radius, shadow, getKategoriMeta, formatFiyat } from '../constants/theme';
 
 const DETAY_ETIKETLER = {
@@ -30,6 +31,7 @@ const DETAY_ETIKETLER = {
 
 export default function IlanDetayScreen({ navigation, route }) {
   const ilan = route.params?.ilan || {};
+  const sahibi = getCurrentUserId() && ilan.ownerId === getCurrentUserId();
   const meta = getKategoriMeta(ilan.kategori);
   const platformlar = Array.isArray(ilan.platformlar) ? ilan.platformlar : [];
 
@@ -97,9 +99,11 @@ export default function IlanDetayScreen({ navigation, route }) {
         </View>
       ) : null}
 
-      <TouchableOpacity style={styles.silButon} onPress={ilanSil}>
-        <Text style={styles.silButonText}>İlanı Sil</Text>
-      </TouchableOpacity>
+      {sahibi ? (
+        <TouchableOpacity style={styles.silButon} onPress={ilanSil}>
+          <Text style={styles.silButonText}>İlanı Sil</Text>
+        </TouchableOpacity>
+      ) : null}
     </ScrollView>
   );
 }
