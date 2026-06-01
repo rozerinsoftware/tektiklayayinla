@@ -8,6 +8,7 @@ import {
 import KategoriListe from '../components/KategoriListe';
 import { useIlanSayimlari } from '../hooks/useIlanSayimlari';
 import { colors, spacing } from '../constants/theme';
+import { openIlanListesi } from '../utils/navigationHelpers';
 
 export default function KategoriDetayScreen({ navigation, route }) {
   const kategoriId = route.params?.kategoriId;
@@ -45,10 +46,9 @@ export default function KategoriDetayScreen({ navigation, route }) {
   }
 
   const ilanListesineGit = (filtreId, baslik) => {
-    navigation.navigate('IlanListesi', {
+    openIlanListesi(navigation, {
       kategoriId: filtreId,
       kategoriBaslik: baslik || bilgi.etiket,
-      aramaModu: true,
     });
   };
 
@@ -60,9 +60,7 @@ export default function KategoriDetayScreen({ navigation, route }) {
       kategoriKok: bilgi.kokId,
     };
     navigation.navigate('IlanEkle', { secilenKategori: secim });
-    if (navigation.canGoBack()) {
-      navigation.popToTop();
-    }
+    navigation.popToTop();
   };
 
   const cocugaBas = (cocuk) => {

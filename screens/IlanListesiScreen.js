@@ -17,6 +17,7 @@ import { girisIste } from '../utils/requireAuth';
 import { ilanKategoriEslesir } from '../constants/kategoriler';
 import { colors, radius, spacing } from '../constants/theme';
 import IlanKart from '../components/IlanKart';
+import { openIlanDetay } from '../utils/navigationHelpers';
 
 export default function IlanListesiScreen({ navigation, route }) {
   const aramaModu = route.params?.aramaModu === true;
@@ -171,7 +172,7 @@ export default function IlanListesiScreen({ navigation, route }) {
           renderItem={({ item }) => (
             <IlanKart
               ilan={item}
-              onPress={() => navigation.navigate('IlanDetay', { ilan: item })}
+              onPress={() => openIlanDetay(navigation, item)}
               onSil={uid && item.ownerId === uid ? () => ilanSil(item.id) : undefined}
             />
           )}

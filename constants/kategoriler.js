@@ -190,8 +190,20 @@ export function ilanKategoriEslesir(ilan, kategoriId) {
   if (!kategoriId) return true;
   const yol = getIlanKategoriYolu(ilan);
   if (yol.includes(kategoriId)) return true;
+
+  const filtre = getKategoriById(kategoriId);
+  if (filtre && yol.length > 0) {
+    const hedef = filtre.yolIds;
+    const prefixUyum = hedef.every((id, i) => yol[i] === id);
+    if (prefixUyum) return true;
+  }
+
   const kok = legacyKategoriToKok(ilan.kategori);
-  return kok === kategoriId;
+  if (kok === kategoriId) return true;
+  // Eski ilanlar (sadece "Emlak" vb.): aynı kök altındaki tüm alt kategorilerde göster
+  if (filtre && kok && filtre.kokId === kok && yol.length <= 1) return true;
+
+  return false;
 }
 
 export function formatIlanSayisi(n) {
