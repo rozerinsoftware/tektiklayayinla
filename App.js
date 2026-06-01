@@ -8,6 +8,8 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import GirisScreen from './screens/GirisScreen';
 import KayitScreen from './screens/KayitScreen';
 import IlanListesiScreen from './screens/IlanListesiScreen';
+import KategoriAnaScreen from './screens/KategoriAnaScreen';
+import KategoriDetayScreen from './screens/KategoriDetayScreen';
 import IlanEkleScreen from './screens/IlanEkleScreen';
 import PlatformSecScreen from './screens/PlatformSecScreen';
 import YayinlaScreen from './screens/YayinlaScreen';
@@ -50,19 +52,24 @@ function IlanFlow() {
   return (
     <IlanStack.Navigator screenOptions={stackScreenOptions}>
       <IlanStack.Screen name="IlanEkle" component={IlanEkleScreen} options={{ title: 'İlan Ekle' }} />
+      <IlanStack.Screen
+        name="KategoriDetay"
+        component={KategoriDetayScreen}
+        options={{ title: 'Kategori Seç' }}
+      />
       <IlanStack.Screen name="PlatformSec" component={PlatformSecScreen} options={{ title: 'Platform Seç' }} />
       <IlanStack.Screen name="Yayinla" component={YayinlaScreen} options={{ title: 'Yayınla' }} />
     </IlanStack.Navigator>
   );
 }
 
-function ListeFlow({ aramaModu }) {
+function AnaSayfaFlow() {
   return (
     <Stack.Navigator screenOptions={stackScreenOptions}>
       <Stack.Screen
         name="IlanListesi"
         component={IlanListesiScreen}
-        initialParams={{ aramaModu }}
+        initialParams={{ aramaModu: false }}
         options={{ headerShown: false }}
       />
       <Stack.Screen name="IlanDetay" component={IlanDetayScreen} options={{ title: 'İlan Detayı' }} />
@@ -70,12 +77,27 @@ function ListeFlow({ aramaModu }) {
   );
 }
 
+function AraFlow() {
+  return (
+    <Stack.Navigator screenOptions={stackScreenOptions}>
+      <Stack.Screen name="KategoriAna" component={KategoriAnaScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="KategoriDetay" component={KategoriDetayScreen} />
+      <Stack.Screen
+        name="IlanListesi"
+        component={IlanListesiScreen}
+        options={{ title: 'İlanlar', headerShown: true }}
+      />
+      <Stack.Screen name="IlanDetay" component={IlanDetayScreen} options={{ title: 'İlan Detayı' }} />
+    </Stack.Navigator>
+  );
+}
+
 function AnaSayfa() {
-  return <ListeFlow aramaModu={false} />;
+  return <AnaSayfaFlow />;
 }
 
 function AraSayfa() {
-  return <ListeFlow aramaModu={true} />;
+  return <AraFlow />;
 }
 
 function TabNavigator() {

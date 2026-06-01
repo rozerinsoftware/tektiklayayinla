@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PrimaryButton, Card } from '../components/ui';
 import { colors, radius, spacing, formatFiyat, getKategoriMeta } from '../constants/theme';
+import { kokIdToMetaKey } from '../constants/kategoriler';
 
 function anaSayfayaGit(navigation) {
   const tabNav = navigation.getParent?.();
@@ -16,7 +17,8 @@ function anaSayfayaGit(navigation) {
 export default function YayinlaScreen({ navigation, route }) {
   const { ilan } = route.params;
   const platformlar = Array.isArray(ilan?.platformlar) ? ilan.platformlar : [];
-  const meta = getKategoriMeta(ilan?.kategori);
+  const metaKey = ilan?.kategoriKok ? kokIdToMetaKey(ilan.kategoriKok) : ilan?.kategori;
+  const meta = getKategoriMeta(metaKey);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -31,7 +33,7 @@ export default function YayinlaScreen({ navigation, route }) {
       <Card>
         <View style={[styles.kategoriStrip, { backgroundColor: meta.bg }]}>
           <Text style={styles.kategoriEmoji}>{meta.emoji}</Text>
-          <Text style={styles.kategoriAd}>{ilan.kategori || 'İlan'}</Text>
+          <Text style={styles.kategoriAd}>{ilan.kategoriEtiket || ilan.kategori || 'İlan'}</Text>
         </View>
         <Text style={styles.fiyat}>{formatFiyat(ilan.fiyat)}</Text>
         <Text style={styles.detayBaslik}>{ilan.baslik}</Text>

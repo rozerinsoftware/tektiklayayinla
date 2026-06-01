@@ -9,20 +9,22 @@ import {
   TextInput,
   ActivityIndicator,
   RefreshControl,
-  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getTumIlanlar, deleteIlan } from '../api';
 import { getCurrentUserId } from '../auth';
 import { girisIste } from '../utils/requireAuth';
-import { colors, radius, spacing, KATEGORI_META } from '../constants/theme';
+import { ilanKategoriEslesir } from '../constants/kategoriler';
+import { colors, radius, spacing } from '../constants/theme';
 import IlanKart from '../components/IlanKart';
+
 export default function IlanListesiScreen({ navigation, route }) {
   const aramaModu = route.params?.aramaModu === true;
+  const kategoriId = route.params?.kategoriId || null;
+  const kategoriBaslik = route.params?.kategoriBaslik || null;
   const [ilanlar, setIlanlar] = useState([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [arama, setArama] = useState('');
-  const [seciliKategori, setSeciliKategori] = useState(null);
 
   const ilanlariGetir = async () => {
     try {
@@ -42,10 +44,16 @@ export default function IlanListesiScreen({ navigation, route }) {
     return unsubscribe;
   }, [navigation]);
 
+  useEffect(() => {
+    if (kategoriBaslik) {
+      navigation.setOptions({ title: kategoriBaslik, headerShown: true });
+    }
+  }, [navigation, kategoriBaslik]);
+
   const filtrelenmis = useMemo(() => {
     let liste = [...ilanlar];
-    if (seciliKategori) {
-      liste = liste.filter((i) => i.kategori === seciliKategori);
+    if (kategoriId) {
+      liste = liste.filter((i) => ilanKategoriEslesir(i, kategoriId));
     }
     const q = arama.trim().toLowerCase();
     if (q) {
@@ -57,7 +65,7 @@ export default function IlanListesiScreen({ navigation, route }) {
       );
     }
     return liste;
-  }, [ilanlar, arama, seciliKategori]);
+  }, [ilanlar, arama, kategoriId]);
 
   const ilanSil = (id) => {
     Alert.alert('İlan Sil', 'Bu ilanı silmek istediğinize emin misiniz?', [
@@ -93,14 +101,14 @@ export default function IlanListesiScreen({ navigation, route }) {
     <View style={styles.bos}>
       <Text style={styles.bosEmoji}>📭</Text>
       <Text style={styles.bosBaslik}>
-        {arama || seciliKategori ? 'Sonuç bulunamadı' : 'Henüz ilan yok'}
+        {arama || kategoriId ? 'Sonuç bulunamadı' : 'Henüz ilan yok'}
       </Text>
       <Text style={styles.bosMetin}>
-        {arama || seciliKategori
-          ? 'Farklı bir arama deneyin.'
+        {arama || kategoriId
+          ? 'Farklı bir arama veya kategori deneyin.'
           : 'İlk ilanınızı ekleyerek başlayın.'}
       </Text>
-      {!arama && !seciliKategori ? (
+      {!arama && !kategoriId ? (
         <TouchableOpacity style={styles.bosButon} onPress={yeniIlan}>
           <Text style={styles.bosButonText}>+ İlan Ver</Text>
         </TouchableOpacity>
@@ -113,7 +121,11 @@ export default function IlanListesiScreen({ navigation, route }) {
       <View style={styles.header}>
         <Text style={styles.headerLogo}>TekTıklaYayınla</Text>
         <Text style={styles.headerAlt}>
-          {aramaModu ? 'İlan ara' : `${filtrelenmis.length} ilan listeleniyor`}
+          {kategoriBaslik
+            ? kategoriBaslik
+            : aramaModu
+              ? 'İlan ara'
+              : `${filtrelenmis.length} ilan listeleniyor`}
         </Text>
       </View>
 
@@ -130,30 +142,14 @@ export default function IlanListesiScreen({ navigation, route }) {
         />
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.kategoriListe}
-        style={styles.kategoriScroll}
-      >
-        {[null, ...Object.keys(KATEGORI_META)].map((item) => {
-          const aktif = seciliKategori === item;
-          const label = item || 'Tümü';
-          const meta = item ? KATEGORI_META[item] : null;
-          return (
-            <TouchableOpacity
-              key={item || 'tumu'}
-              style={[styles.kategoriChip, aktif && styles.kategoriChipAktif]}
-              onPress={() => setSeciliKategori(item)}
-            >
-              {meta ? <Text style={styles.kategoriChipEmoji}>{meta.emoji}</Text> : null}
-              <Text style={[styles.kategoriChipText, aktif && styles.kategoriChipTextAktif]}>
-                {label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      {kategoriId ? (
+        <TouchableOpacity
+          style={styles.kategoriGeriChip}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.kategoriGeriText}>← Kategorilere dön</Text>
+        </TouchableOpacity>
+      ) : null}
     </>
   );
 
@@ -182,7 +178,7 @@ export default function IlanListesiScreen({ navigation, route }) {
         />
       )}
 
-      {!aramaModu ? (
+      {!aramaModu && !kategoriId ? (
         <TouchableOpacity style={styles.fab} onPress={yeniIlan} activeOpacity={0.9}>
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
@@ -217,23 +213,16 @@ const styles = StyleSheet.create({
   },
   aramaIkon: { fontSize: 16, marginRight: spacing.sm },
   aramaInput: { flex: 1, fontSize: 15, color: colors.text },
-  kategoriScroll: { maxHeight: 48, marginBottom: spacing.sm },
-  kategoriListe: { paddingHorizontal: spacing.lg, gap: 8 },
-  kategoriChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+  kategoriGeriChip: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: radius.pill,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  kategoriChipAktif: { backgroundColor: colors.primary, borderColor: colors.primaryDark },
-  kategoriChipEmoji: { fontSize: 14, marginRight: 4 },
-  kategoriChipText: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
-  kategoriChipTextAktif: { color: colors.surface },
+  kategoriGeriText: { fontSize: 13, fontWeight: '600', color: colors.primary },
   liste: { paddingHorizontal: spacing.lg, paddingBottom: 100, flexGrow: 1 },
   loader: { marginTop: 32 },
   bos: { alignItems: 'center', paddingTop: 48, paddingHorizontal: 32 },

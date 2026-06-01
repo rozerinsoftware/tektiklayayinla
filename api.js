@@ -56,17 +56,45 @@ export const getIlanlar = async () => {
 
 export const addIlan = async (ilan) => {
   const uid = await requireUserId();
-  const { baslik, aciklama, fiyat, platformlar, ...detay } = ilan || {};
+  const {
+    baslik,
+    aciklama,
+    fiyat,
+    platformlar,
+    kategori,
+    kategoriId,
+    kategoriYolu,
+    kategoriEtiket,
+    kategoriKok,
+    ...detay
+  } = ilan || {};
   const ref = await addDoc(ilanCol(), {
     ownerId: uid,
     baslik,
     aciklama,
     fiyat,
     platformlar,
+    kategori: kategori || null,
+    kategoriId: kategoriId || null,
+    kategoriYolu: Array.isArray(kategoriYolu) ? kategoriYolu : [],
+    kategoriEtiket: kategoriEtiket || null,
+    kategoriKok: kategoriKok || null,
     detay,
     createdAt: serverTimestamp(),
   });
-  return { id: ref.id, baslik, aciklama, fiyat, platformlar, ...detay };
+  return {
+    id: ref.id,
+    baslik,
+    aciklama,
+    fiyat,
+    platformlar,
+    kategori,
+    kategoriId,
+    kategoriYolu,
+    kategoriEtiket,
+    kategoriKok,
+    ...detay,
+  };
 };
 
 export const updateIlan = async (id, ilan) => {

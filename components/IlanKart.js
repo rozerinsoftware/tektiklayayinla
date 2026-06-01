@@ -2,9 +2,14 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow, getKategoriMeta, formatFiyat } from '../constants/theme';
+import { kokIdToMetaKey } from '../constants/kategoriler';
 
 export default function IlanKart({ ilan, onPress, onSil, compact }) {
-  const meta = getKategoriMeta(ilan.kategori);
+  const metaKey = ilan.kategoriKok
+    ? kokIdToMetaKey(ilan.kategoriKok)
+    : ilan.kategori;
+  const meta = getKategoriMeta(metaKey);
+  const kategoriLabel = ilan.kategoriEtiket || ilan.kategori;
   const platformlar = Array.isArray(ilan.platformlar)
     ? ilan.platformlar
     : ilan.platformlar
@@ -19,9 +24,11 @@ export default function IlanKart({ ilan, onPress, onSil, compact }) {
     >
       <View style={[styles.gorselAlan, { backgroundColor: meta.bg }]}>
         <Text style={styles.gorselEmoji}>{meta.emoji}</Text>
-        {ilan.kategori ? (
+        {kategoriLabel ? (
           <View style={[styles.kategoriEtiket, { backgroundColor: meta.renk }]}>
-            <Text style={styles.kategoriEtiketText}>{ilan.kategori}</Text>
+            <Text style={styles.kategoriEtiketText} numberOfLines={1}>
+              {kategoriLabel.split(' › ').pop()}
+            </Text>
           </View>
         ) : null}
         <View style={styles.tapIcon}>

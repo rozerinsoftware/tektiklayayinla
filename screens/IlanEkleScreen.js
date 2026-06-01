@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { getCurrentUserId } from '../auth';
 import { girisIste } from '../utils/requireAuth';
@@ -15,35 +15,34 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { AppInput, PrimaryButton, SectionTitle } from '../components/ui';
 import { colors, radius, shadow, spacing, getKategoriMeta } from '../constants/theme';
-
-const KATEGORILER = ['Emlak', 'Araç', 'İkinci El'];
+import { kokIdToMetaKey } from '../constants/kategoriler';
 
 const KATEGORI_ALANLARI = {
   Emlak: [
-    { key: 'ilanTuru', label: 'İlan Türü', placeholder: 'Satılık / Kiralık', icon: 'pricetag-outline' },
-    { key: 'emlakTipi', label: 'Emlak Tipi', placeholder: 'Daire / Villa / Arsa...', icon: 'home-outline' },
     { key: 'metrekare', label: 'Metrekare (m²)', placeholder: 'Örn: 120', keyboard: 'numeric', icon: 'resize-outline' },
     { key: 'odaSayisi', label: 'Oda Sayısı', placeholder: 'Örn: 3+1', icon: 'bed-outline' },
     { key: 'binaYasi', label: 'Bina Yaşı', placeholder: 'Örn: 5', keyboard: 'numeric', icon: 'calendar-outline' },
     { key: 'kat', label: 'Bulunduğu Kat', placeholder: 'Örn: 3', keyboard: 'numeric', icon: 'layers-outline' },
   ],
   Araç: [
-    { key: 'aracTipi', label: 'Araç Tipi', placeholder: 'Otomobil / SUV...', icon: 'car-outline' },
     { key: 'marka', label: 'Marka', placeholder: 'Örn: Toyota', icon: 'business-outline' },
     { key: 'model', label: 'Model', placeholder: 'Örn: Corolla', icon: 'construct-outline' },
     { key: 'yil', label: 'Yıl', placeholder: 'Örn: 2020', keyboard: 'numeric', icon: 'calendar-outline' },
     { key: 'kilometre', label: 'Kilometre', placeholder: 'Örn: 50000', keyboard: 'numeric', icon: 'speedometer-outline' },
-    { key: 'yakit', label: 'Yakıt Tipi', placeholder: 'Benzin / Dizel', icon: 'water-outline' },
-    { key: 'vites', label: 'Vites', placeholder: 'Manuel / Otomatik', icon: 'cog-outline' },
   ],
   'İkinci El': [
-    { key: 'urunTipi', label: 'Ürün Tipi', placeholder: 'Telefon / Bilgisayar...', icon: 'cube-outline' },
     { key: 'marka', label: 'Marka', placeholder: 'Örn: Apple', icon: 'business-outline' },
     { key: 'durum', label: 'Ürün Durumu', placeholder: 'Sıfır / İyi', icon: 'star-outline' },
   ],
 };
 
-export default function IlanEkleScreen({ navigation }) {
+export default function IlanEkleScreen({ navigation, route }) {
+  const [secilenKategori, setSecilenKategori] = useState(route.params?.secilenKategori || null);
+  const [baslik, setBaslik] = useState('');
+  const [aciklama, setAciklama] = useState('');
+  const [fiyat, setFiyat] = useState('');
+  const [ekstraAlanlar, setEkstraAlanlar] = useState({});
+
   useFocusEffect(
     useCallback(() => {
       if (!getCurrentUserId()) {
@@ -53,11 +52,21 @@ export default function IlanEkleScreen({ navigation }) {
     }, [navigation])
   );
 
-  const [kategori, setKategori] = useState(null);
-  const [baslik, setBaslik] = useState('');
-  const [aciklama, setAciklama] = useState('');
-  const [fiyat, setFiyat] = useState('');
-  const [ekstraAlanlar, setEkstraAlanlar] = useState({});
+  useEffect(() => {
+    if (route.params?.secilenKategori) {
+      setSecilenKategori(route.params.secilenKategori);
+    }
+  }, [route.params?.secilenKategori]);
+
+  const metaKey = secilenKategori ? kokIdToMetaKey(secilenKategori.kategoriKok) : null;
+  const meta = metaKey ? getKategoriMeta(metaKey) : null;
+
+  const kategoriSec = () => {
+    navigation.navigate('KategoriDetay', {
+      kategoriId: secilenKategori?.kategoriKok || 'emlak',
+      secimModu: true,
+    });
+  };
 
   const ekstraGuncelle = (key, value) => {
     setEkstraAlanlar((prev) => ({ ...prev, [key]: value }));
@@ -75,8 +84,8 @@ export default function IlanEkleScreen({ navigation }) {
       girisIste(navigation);
       return;
     }
-    if (!kategori) {
-      Alert.alert('Uyarı', 'Lütfen bir kategori seçin.');
+    if (!secilenKategori?.kategoriId) {
+      Alert.alert('Uyarı', 'Lütfen kategori seçin.');
       return;
     }
     if (!baslik.trim() || !aciklama.trim() || !String(fiyat).trim()) {
@@ -93,7 +102,11 @@ export default function IlanEkleScreen({ navigation }) {
         baslik: baslik.trim(),
         aciklama: aciklama.trim(),
         fiyat: String(Math.round(fiyatSayi)),
-        kategori,
+        kategori: metaKey,
+        kategoriId: secilenKategori.kategoriId,
+        kategoriYolu: secilenKategori.kategoriYolu,
+        kategoriEtiket: secilenKategori.kategoriEtiket,
+        kategoriKok: secilenKategori.kategoriKok,
         ...ekstraAlanlar,
       },
     });
@@ -110,40 +123,43 @@ export default function IlanEkleScreen({ navigation }) {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
-        <SectionTitle icon="grid-outline" title="Kategori Seçin" subtitle="İlanınızın türünü belirleyin" />
+        <SectionTitle icon="grid-outline" title="Kategori Seçin" subtitle="Sahibinden tarzı alt kategorilere inin" />
 
-        <View style={styles.kategoriSatir}>
-          {KATEGORILER.map((isim) => {
-            const meta = getKategoriMeta(isim);
-            const secili = kategori === isim;
-            return (
-              <TouchableOpacity
-                key={isim}
-                style={[
-                  styles.kategoriKart,
-                  secili && { borderColor: meta.renk, borderWidth: 2, backgroundColor: meta.bg },
-                ]}
-                onPress={() => setKategori(isim)}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.kategoriEmoji}>{meta.emoji}</Text>
-                <Text style={styles.kategoriIsim}>{isim}</Text>
-                {secili ? (
-                  <Ionicons name="checkmark-circle" size={20} color={meta.renk} style={styles.kategoriCheck} />
-                ) : null}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        <TouchableOpacity style={styles.kategoriSecKutu} onPress={kategoriSec} activeOpacity={0.85}>
+          {secilenKategori ? (
+            <>
+              <View style={[styles.kategoriSecIcon, meta && { backgroundColor: meta.bg }]}>
+                <Text style={styles.kategoriSecEmoji}>{meta?.emoji || '📋'}</Text>
+              </View>
+              <View style={styles.kategoriSecMetin}>
+                <Text style={styles.kategoriSecEtiket} numberOfLines={2}>
+                  {secilenKategori.kategoriEtiket}
+                </Text>
+                <Text style={styles.kategoriSecDegistir}>Değiştirmek için dokunun</Text>
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.kategoriSecIcon}>
+                <Text style={styles.tiklamaEmoji}>👆</Text>
+              </View>
+              <View style={styles.kategoriSecMetin}>
+                <Text style={styles.kategoriSecBos}>Kategori seçin</Text>
+                <Text style={styles.kategoriSecDegistir}>Emlak, Vasıta, İkinci El…</Text>
+              </View>
+            </>
+          )}
+          <Ionicons name="chevron-forward" size={22} color={colors.textMuted} />
+        </TouchableOpacity>
 
-        {kategori ? (
+        {secilenKategori ? (
           <View style={styles.formKart}>
             <SectionTitle icon="document-text-outline" title="İlan Bilgileri" />
 
             <AppInput
               label="İlan Başlığı *"
               icon="text-outline"
-              placeholder="Örn: Satılık Daire"
+              placeholder="Örn: Satılık 3+1 Daire"
               value={baslik}
               onChangeText={setBaslik}
             />
@@ -166,17 +182,19 @@ export default function IlanEkleScreen({ navigation }) {
               maxLength={12}
             />
 
-            {KATEGORI_ALANLARI[kategori].map((alan) => (
-              <AppInput
-                key={alan.key}
-                label={`${alan.label} (isteğe bağlı)`}
-                icon={alan.icon}
-                placeholder={alan.placeholder}
-                value={ekstraAlanlar[alan.key] || ''}
-                onChangeText={(val) => ekstraGuncelle(alan.key, val)}
-                keyboardType={alan.keyboard || 'default'}
-              />
-            ))}
+            {metaKey && KATEGORI_ALANLARI[metaKey]
+              ? KATEGORI_ALANLARI[metaKey].map((alan) => (
+                  <AppInput
+                    key={alan.key}
+                    label={`${alan.label} (isteğe bağlı)`}
+                    icon={alan.icon}
+                    placeholder={alan.placeholder}
+                    value={ekstraAlanlar[alan.key] || ''}
+                    onChangeText={(val) => ekstraGuncelle(alan.key, val)}
+                    keyboardType={alan.keyboard || 'default'}
+                  />
+                ))
+              : null}
 
             <PrimaryButton title="Devam Et" icon="arrow-forward" onPress={devamEt} />
           </View>
@@ -189,20 +207,32 @@ export default function IlanEkleScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: 40 },
-  kategoriSatir: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.lg, gap: spacing.sm },
-  kategoriKart: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: spacing.md,
+  kategoriSecKutu: {
+    flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.lg,
     ...shadow.card,
   },
-  kategoriEmoji: { fontSize: 28, marginBottom: 4 },
-  kategoriIsim: { fontSize: 12, fontWeight: '700', color: colors.text, textAlign: 'center' },
-  kategoriCheck: { marginTop: 6 },
+  kategoriSecIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.sm,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  kategoriSecEmoji: { fontSize: 26 },
+  tiklamaEmoji: { fontSize: 32 },
+  kategoriSecMetin: { flex: 1 },
+  kategoriSecEtiket: { fontSize: 14, fontWeight: '700', color: colors.text },
+  kategoriSecBos: { fontSize: 16, fontWeight: '700', color: colors.text },
+  kategoriSecDegistir: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
   formKart: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
