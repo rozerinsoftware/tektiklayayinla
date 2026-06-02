@@ -1,6 +1,8 @@
 import {
   createUserWithEmailAndPassword,
   getAuth,
+  getReactNativePersistence,
+  initializeAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
@@ -8,8 +10,27 @@ import {
 } from 'firebase/auth';
 import { getFirebaseApp } from './firebase';
 
+let authInstance = null;
+
+function authOlustur(app) {
+  try {
+    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+    return initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    });
+  } catch (error) {
+    if (error?.code === 'auth/already-initialized') {
+      return getAuth(app);
+    }
+    return getAuth(app);
+  }
+}
+
 export function getFirebaseAuth() {
-  return getAuth(getFirebaseApp());
+  if (authInstance) return authInstance;
+  const app = getFirebaseApp();
+  authInstance = authOlustur(app);
+  return authInstance;
 }
 
 export function getCurrentUserId() {

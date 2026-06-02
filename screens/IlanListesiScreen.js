@@ -90,7 +90,7 @@ export default function IlanListesiScreen({ navigation, route }) {
     if (!girisIste(navigation)) return;
     const tabNav = navigation.getParent();
     if (tabNav) {
-      tabNav.navigate('İlan Ver', { screen: 'IlanEkle' });
+      tabNav.navigate('İlan Ver', { screen: 'KategoriAna', params: { secimModu: true } });
       return;
     }
     navigation.navigate('IlanEkle');

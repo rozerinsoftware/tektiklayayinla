@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React, { useEffect, useMemo, useCallback, useLayoutEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, BackHandler } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   getKategoriById,
@@ -9,6 +10,7 @@ import KategoriListe from '../components/KategoriListe';
 import { useIlanSayimlari } from '../hooks/useIlanSayimlari';
 import { colors, spacing } from '../constants/theme';
 import { openIlanListesi } from '../utils/navigationHelpers';
+import { anaKategoriListesineDon } from '../utils/ilanNav';
 
 export default function KategoriDetayScreen({ navigation, route }) {
   const kategoriId = route.params?.kategoriId;
@@ -20,16 +22,55 @@ export default function KategoriDetayScreen({ navigation, route }) {
     yukle();
   }, [yukle]);
 
+  const kategoriGeri = useCallback(() => {
+    if (secimModu) {
+      anaKategoriListesineDon(navigation);
+      return;
+    }
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+    anaKategoriListesineDon(navigation);
+  }, [navigation, secimModu]);
+
+  useLayoutEffect(() => {
+    if (!secimModu || !bilgi?.node?.baslik) return;
+    navigation.setOptions({
+      title: bilgi.node.baslik,
+      headerStyle: { backgroundColor: colors.headerBg },
+      headerTintColor: colors.primaryText,
+      headerTitleStyle: { fontWeight: '700', color: colors.primaryText },
+      headerLeft: () => (
+        <TouchableOpacity onPress={kategoriGeri} hitSlop={8} style={styles.headerGeri}>
+          <Ionicons name="arrow-back" size={24} color={colors.primaryText} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, bilgi, secimModu, kategoriGeri]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!secimModu) return undefined;
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        kategoriGeri();
+        return true;
+      });
+      return () => sub.remove();
+    }, [secimModu, kategoriGeri])
+  );
+
   useEffect(() => {
-    if (bilgi?.node?.baslik) {
+    if (!secimModu && bilgi?.node?.baslik) {
       navigation.setOptions({
         title: bilgi.node.baslik,
         headerStyle: { backgroundColor: colors.headerBg },
         headerTintColor: colors.primaryText,
         headerTitleStyle: { fontWeight: '700', color: colors.primaryText },
+        headerLeft: undefined,
       });
     }
-  }, [navigation, bilgi]);
+  }, [navigation, bilgi, secimModu]);
 
   const node = bilgi?.node;
   const cocuklar = node?.cocuklar || [];
@@ -60,7 +101,6 @@ export default function KategoriDetayScreen({ navigation, route }) {
       kategoriKok: bilgi.kokId,
     };
     navigation.navigate('IlanEkle', { secilenKategori: secim });
-    navigation.popToTop();
   };
 
   const cocugaBas = (cocuk) => {
@@ -109,6 +149,16 @@ export default function KategoriDetayScreen({ navigation, route }) {
         </TouchableOpacity>
       ) : null}
 
+      {secimModu ? (
+        <TouchableOpacity
+          style={styles.kokGeriBanner}
+          onPress={() => anaKategoriListesineDon(navigation)}
+        >
+          <Ionicons name="grid-outline" size={18} color={colors.primary} />
+          <Text style={styles.kokGeriText}>Ana kategorilere dön (Emlak, Vasıta…)</Text>
+        </TouchableOpacity>
+      ) : null}
+
       <KategoriListe
         baslik={node.baslik}
         tumBaslik={`Tüm '${node.baslik}' İlanları`}
@@ -154,4 +204,16 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   secimBannerText: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.primary },
+  kokGeriBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  kokGeriText: { flex: 1, fontSize: 13, fontWeight: '600', color: colors.primary },
+  headerGeri: { paddingHorizontal: 4, paddingVertical: 4 },
 });

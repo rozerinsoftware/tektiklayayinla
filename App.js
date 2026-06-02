@@ -50,13 +50,22 @@ function ProfilFlow() {
 
 function IlanFlow() {
   return (
-    <IlanStack.Navigator screenOptions={stackScreenOptions}>
-      <IlanStack.Screen name="IlanEkle" component={IlanEkleScreen} options={{ title: 'İlan Ekle' }} />
+    <IlanStack.Navigator
+      initialRouteName="KategoriAna"
+      screenOptions={stackScreenOptions}
+    >
+      <IlanStack.Screen
+        name="KategoriAna"
+        component={KategoriAnaScreen}
+        initialParams={{ secimModu: true }}
+        options={{ title: 'İlan Ver' }}
+      />
       <IlanStack.Screen
         name="KategoriDetay"
         component={KategoriDetayScreen}
-        options={{ title: 'Kategori Seç' }}
+        options={{ title: 'Alt Kategori' }}
       />
+      <IlanStack.Screen name="IlanEkle" component={IlanEkleScreen} options={{ title: 'İlan Ekle' }} />
       <IlanStack.Screen name="PlatformSec" component={PlatformSecScreen} options={{ title: 'Platform Seç' }} />
       <IlanStack.Screen name="Yayinla" component={YayinlaScreen} options={{ title: 'Yayınla' }} />
     </IlanStack.Navigator>

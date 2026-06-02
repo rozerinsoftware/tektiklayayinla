@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useLayoutEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { getCurrentUserId } from '../auth';
 import { girisIste } from '../utils/requireAuth';
@@ -11,10 +11,12 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  BackHandler,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppInput, PrimaryButton, SectionTitle } from '../components/ui';
 import { colors, radius, shadow, spacing, getKategoriMeta } from '../constants/theme';
+import { anaKategoriListesineDon } from '../utils/ilanNav';
 import { kokIdToMetaKey } from '../constants/kategoriler';
 
 const KATEGORI_ALANLARI = {
@@ -34,6 +36,19 @@ const KATEGORI_ALANLARI = {
     { key: 'marka', label: 'Marka', placeholder: 'Örn: Apple', icon: 'business-outline' },
     { key: 'durum', label: 'Ürün Durumu', placeholder: 'Sıfır / İyi', icon: 'star-outline' },
   ],
+  'İş Makineleri': [
+    { key: 'marka', label: 'Marka', placeholder: 'Örn: New Holland', icon: 'business-outline' },
+    { key: 'model', label: 'Model', placeholder: 'Örn: T480', icon: 'construct-outline' },
+    { key: 'yil', label: 'Yıl', placeholder: 'Örn: 2018', keyboard: 'numeric', icon: 'calendar-outline' },
+    { key: 'calismaSaati', label: 'Çalışma Saati', placeholder: 'Örn: 2500', keyboard: 'numeric', icon: 'time-outline' },
+  ],
+};
+
+const BASLIK_ORNEK = {
+  Emlak: 'Örn: Satılık 3+1 Daire',
+  Araç: 'Örn: 2020 Toyota Corolla',
+  'İkinci El': 'Örn: iPhone 14 Pro Max',
+  'İş Makineleri': 'Örn: 2019 John Deere Traktör',
 };
 
 export default function IlanEkleScreen({ navigation, route }) {
@@ -58,14 +73,38 @@ export default function IlanEkleScreen({ navigation, route }) {
     }
   }, [route.params?.secilenKategori]);
 
+  const kategoriyeGeri = useCallback(() => {
+    anaKategoriListesineDon(navigation);
+  }, [navigation]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: secilenKategori
+        ? () => (
+            <TouchableOpacity onPress={kategoriyeGeri} style={styles.headerGeri} hitSlop={8}>
+              <Ionicons name="arrow-back" size={24} color={colors.primaryText} />
+            </TouchableOpacity>
+          )
+        : undefined,
+    });
+  }, [navigation, secilenKategori, kategoriyeGeri]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!secilenKategori) return undefined;
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        kategoriyeGeri();
+        return true;
+      });
+      return () => sub.remove();
+    }, [secilenKategori, kategoriyeGeri])
+  );
+
   const metaKey = secilenKategori ? kokIdToMetaKey(secilenKategori.kategoriKok) : null;
   const meta = metaKey ? getKategoriMeta(metaKey) : null;
 
   const kategoriSec = () => {
-    navigation.navigate('KategoriDetay', {
-      kategoriId: secilenKategori?.kategoriKok || 'emlak',
-      secimModu: true,
-    });
+    anaKategoriListesineDon(navigation);
   };
 
   const ekstraGuncelle = (key, value) => {
@@ -145,7 +184,7 @@ export default function IlanEkleScreen({ navigation, route }) {
               </View>
               <View style={styles.kategoriSecMetin}>
                 <Text style={styles.kategoriSecBos}>Kategori seçin</Text>
-                <Text style={styles.kategoriSecDegistir}>Emlak, Vasıta, İkinci El…</Text>
+                <Text style={styles.kategoriSecDegistir}>Emlak, Vasıta, İkinci El, İş Makineleri…</Text>
               </View>
             </>
           )}
@@ -159,7 +198,7 @@ export default function IlanEkleScreen({ navigation, route }) {
             <AppInput
               label="İlan Başlığı *"
               icon="text-outline"
-              placeholder="Örn: Satılık 3+1 Daire"
+              placeholder={BASLIK_ORNEK[metaKey] || 'İlan başlığı girin'}
               value={baslik}
               onChangeText={setBaslik}
             />
@@ -207,6 +246,7 @@ export default function IlanEkleScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: 40 },
+  headerGeri: { paddingHorizontal: 4, paddingVertical: 4 },
   kategoriSecKutu: {
     flexDirection: 'row',
     alignItems: 'center',

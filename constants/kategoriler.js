@@ -1,7 +1,5 @@
 /**
- * Sahibinden tarzı hiyerarşik kategori ağacı.
- * id: benzersiz slug | baslik: görünen ad | cocuklar: alt kategoriler
- * ilgili: aynı ekranda "İlgili Kategoriler" bölümü
+ * Uygulamanın desteklediği ana ilan kategorileri (Emlak, Vasıta, İkinci El, İş Makineleri).
  */
 
 const emlakKonutSatilik = [
@@ -36,12 +34,6 @@ export const KOK_KATEGORILER = [
           { id: 'turistik-gunluk', baslik: 'Turistik Günlük Kiralık', yaprak: true },
           { id: 'devren-satilik-konut', baslik: 'Devren Satılık Konut', yaprak: true },
         ],
-        ilgili: [
-          { id: 'ilg-alci', baslik: 'Alçı & Kartonpiyer', hizmet: true },
-          { id: 'ilg-mutfak', baslik: 'Mutfak, Banyo Yenileme', hizmet: true },
-          { id: 'ilg-mobilya', baslik: 'Mobilya', hizmet: true },
-          { id: 'ilg-beyaz', baslik: 'Beyaz Eşya', hizmet: true },
-        ],
       },
       { id: 'is-yeri', baslik: 'İş Yeri', yaprak: true },
       { id: 'arsa', baslik: 'Arsa', yaprak: true },
@@ -49,12 +41,6 @@ export const KOK_KATEGORILER = [
       { id: 'bina', baslik: 'Bina', yaprak: true },
       { id: 'devre-mulk', baslik: 'Devre Mülk', yaprak: true },
       { id: 'turistik-tesis', baslik: 'Turistik Tesis', yaprak: true },
-    ],
-    ilgili: [
-      { id: 'ilg-boya', baslik: 'Boya & Badana', hizmet: true },
-      { id: 'ilg-nakliyat', baslik: 'Evden Eve Nakliyat', hizmet: true },
-      { id: 'ilg-fayans', baslik: 'Islak Zemin & Fayans', hizmet: true },
-      { id: 'ilg-yapi', baslik: 'Yapı Malzemeleri', hizmet: true },
     ],
   },
   {
@@ -73,10 +59,6 @@ export const KOK_KATEGORILER = [
       { id: 'deniz', baslik: 'Deniz Araçları', yaprak: true },
       { id: 'hasarli', baslik: 'Hasarlı Araçlar', yaprak: true },
     ],
-    ilgili: [
-      { id: 'ilg-yedek', baslik: 'Yedek Parça', hizmet: true },
-      { id: 'ilg-aksesuar', baslik: 'Aksesuar', hizmet: true },
-    ],
   },
   {
     id: 'ikinci-el',
@@ -94,25 +76,18 @@ export const KOK_KATEGORILER = [
     ],
   },
   {
-    id: 'yedek-parca',
-    baslik: 'Yedek Parça, Aksesuar, Donanım',
-    emoji: '⚙️',
-    renk: '#475569',
-    renkBg: '#F1F5F9',
-    cocuklar: [
-      { id: 'oto-yedek', baslik: 'Otomotiv Ekipmanları', yaprak: true },
-      { id: 'motosiklet-parca', baslik: 'Motosiklet Ekipmanları', yaprak: true },
-    ],
-  },
-  {
     id: 'is-makineleri',
     baslik: 'İş Makineleri & Sanayi',
-    emoji: '🏗️',
+    emoji: '🚜',
     renk: '#B45309',
     renkBg: '#FEF3C7',
     cocuklar: [
+      { id: 'traktor', baslik: 'Traktör', yaprak: true },
       { id: 'tarim', baslik: 'Tarım Makineleri', yaprak: true },
-      { id: 'sanayi', baslik: 'Sanayi', yaprak: true },
+      { id: 'ekskavator', baslik: 'Ekskavatör', yaprak: true },
+      { id: 'forklift', baslik: 'Forklift & Vinç', yaprak: true },
+      { id: 'sanayi', baslik: 'Sanayi Makineleri', yaprak: true },
+      { id: 'jenerator', baslik: 'Jeneratör & Kompresör', yaprak: true },
     ],
   },
 ];
@@ -170,9 +145,14 @@ export function getAltBaslikMetni(node) {
   return cocuklar.length > 6 ? `${metin}...` : metin;
 }
 
-/** Eski ilanlar: kategori = "Emlak" | "Araç" | "İkinci El" */
+/** Eski ilanlar: kategori = "Emlak" | "Araç" | "İkinci El" | "İş Makineleri" */
 export function legacyKategoriToKok(kategori) {
-  const m = { Emlak: 'emlak', Araç: 'vasita', 'İkinci El': 'ikinci-el' };
+  const m = {
+    Emlak: 'emlak',
+    Araç: 'vasita',
+    'İkinci El': 'ikinci-el',
+    'İş Makineleri': 'is-makineleri',
+  };
   return m[kategori] || null;
 }
 
@@ -213,6 +193,22 @@ export function formatIlanSayisi(n) {
 
 /** Kök için theme meta anahtarı */
 export function kokIdToMetaKey(kokId) {
-  const m = { emlak: 'Emlak', vasita: 'Araç', 'ikinci-el': 'İkinci El' };
+  const m = {
+    emlak: 'Emlak',
+    vasita: 'Araç',
+    'ikinci-el': 'İkinci El',
+    'is-makineleri': 'İş Makineleri',
+  };
   return m[kokId] || 'Emlak';
+}
+
+/** Ana kategori kısa açıklaması (liste alt satırı) */
+export function getKokAciklama(kokId) {
+  const m = {
+    emlak: 'Konut, iş yeri, arsa, bina…',
+    vasita: 'Otomobil, SUV, motosiklet, ticari…',
+    'ikinci-el': 'Telefon, bilgisayar, ev eşyası, giyim…',
+    'is-makineleri': 'Traktör, tarım, ekskavatör, sanayi…',
+  };
+  return m[kokId] || '';
 }

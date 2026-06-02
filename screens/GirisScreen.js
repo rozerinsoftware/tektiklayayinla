@@ -26,7 +26,7 @@ function girisSonrasiGit(navigation, afterLogin) {
           state: {
             routes: [
               { name: 'Ana Sayfa' },
-              { name: 'İlan Ver', state: { routes: [{ name: 'IlanEkle' }] } },
+              { name: 'İlan Ver', state: { routes: [{ name: 'KategoriAna', params: { secimModu: true } }] } },
             ],
             index: 1,
           },

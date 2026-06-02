@@ -69,6 +69,7 @@ export const KATEGORI_META = {
   Emlak: { emoji: '🏠', renk: '#0D9488', bg: '#CCFBF1' },
   Araç: { emoji: '🚗', renk: '#EA580C', bg: '#FFEDD5' },
   'İkinci El': { emoji: '📦', renk: '#7C3AED', bg: '#EDE9FE' },
+  'İş Makineleri': { emoji: '🚜', renk: '#B45309', bg: '#FEF3C7' },
 };
 
 export function getKategoriMeta(kategori) {
