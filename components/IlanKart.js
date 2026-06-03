@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow, getKategoriMeta, formatFiyat } from '../constants/theme';
 import { kokIdToMetaKey } from '../constants/kategoriler';
+import { formatKonumEtiket } from '../utils/konum';
 
 export default function IlanKart({ ilan, onPress, onSil, compact }) {
   const metaKey = ilan.kategoriKok
@@ -10,6 +11,7 @@ export default function IlanKart({ ilan, onPress, onSil, compact }) {
     : ilan.kategori;
   const meta = getKategoriMeta(metaKey);
   const kategoriLabel = ilan.kategoriEtiket || ilan.kategori;
+  const konumMetni = formatKonumEtiket(ilan.konum);
   const platformlar = Array.isArray(ilan.platformlar)
     ? ilan.platformlar
     : ilan.platformlar
@@ -44,6 +46,15 @@ export default function IlanKart({ ilan, onPress, onSil, compact }) {
         <Text style={styles.aciklama} numberOfLines={2}>
           {ilan.aciklama}
         </Text>
+
+        {konumMetni ? (
+          <View style={styles.konumSatir}>
+            <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
+            <Text style={styles.konumText} numberOfLines={1}>
+              {konumMetni}
+            </Text>
+          </View>
+        ) : null}
 
         {platformlar.length > 0 ? (
           <View style={styles.platformSatir}>
@@ -123,6 +134,8 @@ const styles = StyleSheet.create({
   fiyat: { fontSize: 18, fontWeight: '800', color: colors.price, marginBottom: 4 },
   baslik: { fontSize: 15, fontWeight: '600', color: colors.text, lineHeight: 20 },
   aciklama: { fontSize: 13, color: colors.textSecondary, marginTop: 4, lineHeight: 18 },
+  konumSatir: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
+  konumText: { flex: 1, fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
   platformSatir: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', marginTop: 8, gap: 6 },
   platformChip: {
     backgroundColor: colors.background,

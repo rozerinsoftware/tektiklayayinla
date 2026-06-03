@@ -64,6 +64,8 @@ export default function AdminIlanDuzenleScreen({ navigation, route }) {
   const [platformlar, setPlatformlar] = useState(
     Array.isArray(mevcut.platformlar) ? [...mevcut.platformlar] : []
   );
+  const [kategoriId, setKategoriId] = useState(mevcut.kategoriId || '');
+  const [kategoriEtiket, setKategoriEtiket] = useState(mevcut.kategoriEtiket || '');
   const [kaydediliyor, setKaydediliyor] = useState(false);
 
   const ekstraGuncelle = (key, value) => {
@@ -98,6 +100,12 @@ export default function AdminIlanDuzenleScreen({ navigation, route }) {
         aciklama: aciklama.trim(),
         fiyat: String(Math.round(fiyatSayi)),
         kategori,
+        kategoriId: kategoriId.trim() || mevcut.kategoriId || null,
+        kategoriYolu: mevcut.kategoriYolu,
+        kategoriEtiket: kategoriEtiket.trim() || mevcut.kategoriEtiket || null,
+        kategoriKok: mevcut.kategoriKok,
+        konum: mevcut.konum,
+        ornek: mevcut.ornek,
         platformlar,
         ...ekstraAlanlar,
       });
@@ -119,7 +127,10 @@ export default function AdminIlanDuzenleScreen({ navigation, route }) {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.ustNot}>
           <Ionicons name="shield-outline" size={14} color={colors.textMuted} />
-          <Text style={styles.ustNotText}>Admin düzenleme — sahip: {mevcut.ownerId || '—'}</Text>
+          <Text style={styles.ustNotText}>
+            Admin düzenleme — sahip: {mevcut.ownerId || '—'}
+            {mevcut.ornek ? ' · ÖRNEK İLAN' : ''}
+          </Text>
         </View>
 
         <SectionTitle icon="grid-outline" title="Kategori" />
@@ -163,6 +174,20 @@ export default function AdminIlanDuzenleScreen({ navigation, route }) {
               value={fiyat}
               onChangeText={fiyatGuncelle}
               keyboardType="number-pad"
+            />
+            <AppInput
+              label="Kategori ID (daire, rezidans…)"
+              icon="key-outline"
+              placeholder="daire"
+              value={kategoriId}
+              onChangeText={setKategoriId}
+            />
+            <AppInput
+              label="Kategori etiketi"
+              icon="trail-sign-outline"
+              placeholder="Emlak › Konut › Satılık › Daire"
+              value={kategoriEtiket}
+              onChangeText={setKategoriEtiket}
             />
 
             <Text style={styles.bolum}>Platformlar</Text>

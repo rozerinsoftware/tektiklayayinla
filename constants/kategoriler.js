@@ -2,6 +2,9 @@
  * Uygulamanın desteklediği ana ilan kategorileri (Emlak, Vasıta, İkinci El, İş Makineleri).
  */
 
+import { BILGISAYAR_ALT_AGAC, CEP_TELEFONU_ALT_AGAC } from './ikinciElAltKategoriler';
+import { IS_MAKINELERI_ALT_AGAC } from './isMakineleriKatalog';
+
 const emlakKonutSatilik = [
   { id: 'daire', baslik: 'Daire', yaprak: true },
   { id: 'rezidans', baslik: 'Rezidans', yaprak: true },
@@ -67,8 +70,8 @@ export const KOK_KATEGORILER = [
     renk: '#7C3AED',
     renkBg: '#EDE9FE',
     cocuklar: [
-      { id: 'bilgisayar', baslik: 'Bilgisayar', yaprak: true },
-      { id: 'cep-telefonu', baslik: 'Cep Telefonu', yaprak: true },
+      BILGISAYAR_ALT_AGAC,
+      CEP_TELEFONU_ALT_AGAC,
       { id: 'ev-dekorasyon', baslik: 'Ev Dekorasyon', yaprak: true },
       { id: 'ev-elektronigi', baslik: 'Ev Elektroniği', yaprak: true },
       { id: 'giyim', baslik: 'Giyim & Aksesuar', yaprak: true },
@@ -81,14 +84,7 @@ export const KOK_KATEGORILER = [
     emoji: '🚜',
     renk: '#B45309',
     renkBg: '#FEF3C7',
-    cocuklar: [
-      { id: 'traktor', baslik: 'Traktör', yaprak: true },
-      { id: 'tarim', baslik: 'Tarım Makineleri', yaprak: true },
-      { id: 'ekskavator', baslik: 'Ekskavatör', yaprak: true },
-      { id: 'forklift', baslik: 'Forklift & Vinç', yaprak: true },
-      { id: 'sanayi', baslik: 'Sanayi Makineleri', yaprak: true },
-      { id: 'jenerator', baslik: 'Jeneratör & Kompresör', yaprak: true },
-    ],
+    cocuklar: [IS_MAKINELERI_ALT_AGAC],
   },
 ];
 
@@ -160,28 +156,43 @@ export function getIlanKategoriYolu(ilan) {
   if (Array.isArray(ilan.kategoriYolu) && ilan.kategoriYolu.length) {
     return ilan.kategoriYolu;
   }
+  if (ilan.kategoriId) {
+    const bilgi = getKategoriById(ilan.kategoriId);
+    if (bilgi?.yolIds?.length) return bilgi.yolIds;
+  }
   const kok = legacyKategoriToKok(ilan.kategori);
   if (kok && ilan.kategoriId) return [kok, ilan.kategoriId];
   if (kok) return [kok];
   return [];
 }
 
+/**
+ * İlan, seçilen kategoriyle eşleşiyor mu?
+ * - Yaprak filtre (Daire, Yalı Dairesi): sadece aynı yaprak veya o yolun altı
+ * - Üst kategori (Satılık, Konut): altındaki tüm ilanlar
+ * - Eski ilanlar (sadece kök "Emlak"): yalnızca kök kategoride görünür
+ */
 export function ilanKategoriEslesir(ilan, kategoriId) {
   if (!kategoriId) return true;
-  const yol = getIlanKategoriYolu(ilan);
-  if (yol.includes(kategoriId)) return true;
 
   const filtre = getKategoriById(kategoriId);
-  if (filtre && yol.length > 0) {
-    const hedef = filtre.yolIds;
-    const prefixUyum = hedef.every((id, i) => yol[i] === id);
-    if (prefixUyum) return true;
+  const yol = getIlanKategoriYolu(ilan);
+
+  if (ilan.kategoriId === kategoriId) return true;
+  if (yol.includes(kategoriId)) return true;
+
+  if (filtre?.yolIds?.length && yol.length >= filtre.yolIds.length) {
+    const ustKategori = filtre.yolIds.every((id, i) => yol[i] === id);
+    if (ustKategori) return true;
   }
 
-  const kok = legacyKategoriToKok(ilan.kategori);
+  const kok = legacyKategoriToKok(ilan.kategori) || yol[0];
   if (kok === kategoriId) return true;
-  // Eski ilanlar (sadece "Emlak" vb.): aynı kök altındaki tüm alt kategorilerde göster
-  if (filtre && kok && filtre.kokId === kok && yol.length <= 1) return true;
+
+  // Eski ilan: sadece kök kategori (Emlak, Vasıta…) seçiliyken göster — alt kategorilerde değil
+  if (filtre && kok && filtre.kokId === kok && yol.length <= 1) {
+    return filtre.yolIds.length === 1 && filtre.yolIds[0] === kok;
+  }
 
   return false;
 }

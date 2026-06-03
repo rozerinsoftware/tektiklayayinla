@@ -18,6 +18,8 @@ import { AppInput, PrimaryButton, SectionTitle } from '../components/ui';
 import { colors, radius, shadow, spacing, getKategoriMeta } from '../constants/theme';
 import { anaKategoriListesineDon } from '../utils/ilanNav';
 import { kokIdToMetaKey } from '../constants/kategoriler';
+import { konumZorunluMu } from '../utils/konum';
+import KonumSecici from '../components/KonumSecici';
 
 const KATEGORI_ALANLARI = {
   Emlak: [
@@ -57,6 +59,7 @@ export default function IlanEkleScreen({ navigation, route }) {
   const [aciklama, setAciklama] = useState('');
   const [fiyat, setFiyat] = useState('');
   const [ekstraAlanlar, setEkstraAlanlar] = useState({});
+  const [konum, setKonum] = useState(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -70,6 +73,7 @@ export default function IlanEkleScreen({ navigation, route }) {
   useEffect(() => {
     if (route.params?.secilenKategori) {
       setSecilenKategori(route.params.secilenKategori);
+      setKonum(null);
     }
   }, [route.params?.secilenKategori]);
 
@@ -136,6 +140,11 @@ export default function IlanEkleScreen({ navigation, route }) {
       Alert.alert('Fiyat hatalı', 'Geçerli bir fiyat girin (en az 10 TL).');
       return;
     }
+    const kok = secilenKategori.kategoriKok;
+    if (konumZorunluMu(kok) && (!konum?.latitude || !konum?.longitude)) {
+      Alert.alert('Konum gerekli', 'Lütfen "Konumumu işaretle" ile ilanın yerini belirleyin.');
+      return;
+    }
     navigation.navigate('PlatformSec', {
       yeniIlan: {
         baslik: baslik.trim(),
@@ -146,6 +155,7 @@ export default function IlanEkleScreen({ navigation, route }) {
         kategoriYolu: secilenKategori.kategoriYolu,
         kategoriEtiket: secilenKategori.kategoriEtiket,
         kategoriKok: secilenKategori.kategoriKok,
+        konum: konum || null,
         ...ekstraAlanlar,
       },
     });
@@ -234,6 +244,14 @@ export default function IlanEkleScreen({ navigation, route }) {
                   />
                 ))
               : null}
+
+            {secilenKategori?.kategoriKok && konumZorunluMu(secilenKategori.kategoriKok) ? (
+              <KonumSecici
+                konum={konum}
+                onKonumChange={setKonum}
+                zorunlu
+              />
+            ) : null}
 
             <PrimaryButton title="Devam Et" icon="arrow-forward" onPress={devamEt} />
           </View>

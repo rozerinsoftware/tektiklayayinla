@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "konusmalar",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "katilimcilar", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "sonMesajAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

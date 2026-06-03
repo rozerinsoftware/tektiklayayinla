@@ -19,7 +19,7 @@ export function girisIste(navigation, mesaj = 'İlan eklemek için giriş yapmal
     },
     {
       text: 'Kayıt Ol',
-      onPress: () => root.navigate('Kayit'),
+      onPress: () => root.navigate('KayitEmail'),
     },
   ]);
   return false;

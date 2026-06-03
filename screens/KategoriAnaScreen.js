@@ -131,12 +131,16 @@ export default function KategoriAnaScreen({ navigation, route }) {
           <KategoriKokSatiri
             kategori={item}
             altMetin={getKokAciklama(item.id) || getAltBaslikMetni(item)}
-            onPress={() =>
+            onPress={() => {
+              if (item.id === 'ikinci-el') {
+                navigation.navigate('IkinciElVitrin');
+                return;
+              }
               navigation.navigate('KategoriDetay', {
                 kategoriId: item.id,
                 secimModu: false,
-              })
-            }
+              });
+            }}
           />
         )}
         contentContainerStyle={styles.liste}

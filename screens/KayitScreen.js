@@ -3,12 +3,12 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { signUp } from '../auth';
 import { createUserProfile } from '../api';
@@ -18,13 +18,29 @@ import { colors, radius, shadow, spacing } from '../constants/theme';
 export default function KayitScreen({ navigation }) {
   const [ad, setAd] = useState('');
   const [soyad, setSoyad] = useState('');
+  const [telefon, setTelefon] = useState('');
   const [email, setEmail] = useState('');
   const [sifre, setSifre] = useState('');
   const [yukleniyor, setYukleniyor] = useState(false);
 
+  const telefonFormatla = (text) => {
+    const rakam = String(text).replace(/\D/g, '').slice(0, 11);
+    if (rakam.length <= 4) return rakam;
+    if (rakam.length <= 7) return `${rakam.slice(0, 4)} ${rakam.slice(4)}`;
+    if (rakam.length <= 9) {
+      return `${rakam.slice(0, 4)} ${rakam.slice(4, 7)} ${rakam.slice(7)}`;
+    }
+    return `${rakam.slice(0, 4)} ${rakam.slice(4, 7)} ${rakam.slice(7, 9)} ${rakam.slice(9)}`;
+  };
+
   const kayitOl = async () => {
     if (!ad.trim() || !soyad.trim()) {
       Alert.alert('Hata', 'Ad ve soyad girin.');
+      return;
+    }
+    const telRakam = telefon.replace(/\D/g, '');
+    if (telRakam.length < 10) {
+      Alert.alert('Hata', 'Geçerli bir cep telefonu girin.');
       return;
     }
     if (!email.trim() || !sifre) {
@@ -37,8 +53,9 @@ export default function KayitScreen({ navigation }) {
     }
     try {
       setYukleniyor(true);
+      const telFormat = telefonFormatla(telRakam);
       await signUp({ email, password: sifre, ad, soyad });
-      await createUserProfile({ email, ad, soyad });
+      await createUserProfile({ email, ad, soyad, telefon: telFormat });
       if (navigation.canGoBack()) {
         navigation.goBack();
       } else {
@@ -68,6 +85,14 @@ export default function KayitScreen({ navigation }) {
           <View style={styles.formKart}>
             <AppInput label="Ad" icon="person-outline" placeholder="Adınız" value={ad} onChangeText={setAd} />
             <AppInput label="Soyad" icon="person-outline" placeholder="Soyadınız" value={soyad} onChangeText={setSoyad} />
+            <AppInput
+              label="Cep telefonu"
+              icon="call-outline"
+              placeholder="05XX XXX XX XX"
+              value={telefon}
+              onChangeText={(t) => setTelefon(telefonFormatla(t))}
+              keyboardType="phone-pad"
+            />
             <AppInput
               label="E-posta"
               icon="mail-outline"

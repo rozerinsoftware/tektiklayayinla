@@ -11,6 +11,7 @@ import { useIlanSayimlari } from '../hooks/useIlanSayimlari';
 import { colors, spacing } from '../constants/theme';
 import { openIlanListesi } from '../utils/navigationHelpers';
 import { anaKategoriListesineDon } from '../utils/ilanNav';
+import { isMakinesiFormYapragi } from '../constants/isMakineleriAlanlari';
 
 export default function KategoriDetayScreen({ navigation, route }) {
   const kategoriId = route.params?.kategoriId;
@@ -100,6 +101,24 @@ export default function KategoriDetayScreen({ navigation, route }) {
       kategoriEtiket: bilgi.etiket,
       kategoriKok: bilgi.kokId,
     };
+    if (secim.kategoriKok === 'vasita') {
+      navigation.navigate('VasitaSecim', { secilenKategori: secim });
+      return;
+    }
+    if (secim.kategoriKok === 'emlak') {
+      navigation.navigate('EmlakTemelBilgi', { secilenKategori: secim });
+      return;
+    }
+    if (secim.kategoriKok === 'ikinci-el') {
+      navigation.navigate('IkinciElUrunOzellikleri', { secilenKategori: secim });
+      return;
+    }
+    if (secim.kategoriKok === 'is-makineleri') {
+      if (isMakinesiFormYapragi(secim.kategoriId, secim.kategoriYolu)) {
+        navigation.navigate('IsMakineleriTemelBilgi', { secilenKategori: secim });
+        return;
+      }
+    }
     navigation.navigate('IlanEkle', { secilenKategori: secim });
   };
 

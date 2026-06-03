@@ -1,3 +1,4 @@
+import { updateProfile } from 'firebase/auth';
 import {
   addDoc,
   collection,
@@ -10,9 +11,11 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from 'firebase/firestore';
 import { getCurrentUserId, getFirebaseAuth, waitForAuth } from './auth';
 import { getDb } from './firebase';
+import { ORNEK_ILANLAR } from './constants/ornekIlanlar';
 
 const ilanCol = () => collection(getDb(), 'ilanlar');
 const usersCol = () => collection(getDb(), 'users');
@@ -66,6 +69,7 @@ export const addIlan = async (ilan) => {
     kategoriYolu,
     kategoriEtiket,
     kategoriKok,
+    konum,
     ...detay
   } = ilan || {};
   const ref = await addDoc(ilanCol(), {
@@ -79,6 +83,7 @@ export const addIlan = async (ilan) => {
     kategoriYolu: Array.isArray(kategoriYolu) ? kategoriYolu : [],
     kategoriEtiket: kategoriEtiket || null,
     kategoriKok: kategoriKok || null,
+    konum: konum && konum.latitude != null ? konum : null,
     detay,
     createdAt: serverTimestamp(),
   });
@@ -93,22 +98,72 @@ export const addIlan = async (ilan) => {
     kategoriYolu,
     kategoriEtiket,
     kategoriKok,
+    konum,
     ...detay,
   };
 };
 
 export const updateIlan = async (id, ilan) => {
-  await requireUserId();
-  const { baslik, aciklama, fiyat, platformlar, ...detay } = ilan || {};
-  await updateDoc(doc(getDb(), 'ilanlar', String(id)), {
+  const uid = await requireUserId();
+  const ref = doc(getDb(), 'ilanlar', String(id));
+  const snap = await getDoc(ref);
+  if (!snap.exists() || snap.data().ownerId !== uid) {
+    throw new Error('Bu ilanı güncelleme yetkiniz yok.');
+  }
+  const kaynak = ilan || {};
+  const {
     baslik,
     aciklama,
     fiyat,
     platformlar,
+    kategori,
+    kategoriId,
+    kategoriYolu,
+    kategoriEtiket,
+    kategoriKok,
+    konum,
+    ...rest
+  } = kaynak;
+  const detayMevcut = snap.data()?.detay || {};
+  const detay = { ...detayMevcut };
+  Object.entries(rest).forEach(([key, value]) => {
+    if (value == null) return;
+    if (typeof value === 'string' && value.trim() === '') return;
+    detay[key] = value;
+  });
+  const guncelleme = {
+    baslik,
+    aciklama,
+    fiyat,
+    platformlar: platformlar ?? snap.data().platformlar,
+    kategori,
     detay,
     updatedAt: serverTimestamp(),
+  };
+  if (kategoriId != null) guncelleme.kategoriId = kategoriId;
+  if (Array.isArray(kategoriYolu)) guncelleme.kategoriYolu = kategoriYolu;
+  if (kategoriEtiket != null) guncelleme.kategoriEtiket = kategoriEtiket;
+  if (kategoriKok != null) guncelleme.kategoriKok = kategoriKok;
+  if (konum !== undefined) {
+    guncelleme.konum = konum && konum.latitude != null ? konum : null;
+  }
+  await updateDoc(ref, guncelleme);
+  return { id, baslik, aciklama, fiyat, platformlar, kategori, kategoriId, kategoriKok, konum, ...detay };
+};
+
+export const unpublishIlan = async (id, neden) => {
+  const uid = await requireUserId();
+  const ref = doc(getDb(), 'ilanlar', String(id));
+  const snap = await getDoc(ref);
+  if (!snap.exists() || snap.data().ownerId !== uid) {
+    throw new Error('Bu ilanı yayından kaldırma yetkiniz yok.');
+  }
+  await updateDoc(ref, {
+    platformlar: [],
+    yayindanKaldirmaNedeni: neden || null,
+    updatedAt: serverTimestamp(),
   });
-  return { id, baslik, aciklama, fiyat, platformlar, ...detay };
+  return { message: 'İlan yayından kaldırıldı' };
 };
 
 export const deleteIlan = async (id) => {
@@ -119,30 +174,165 @@ export const deleteIlan = async (id) => {
 
 // ——— Kullanıcı profili ———
 
-export async function createUserProfile({ ad, soyad, email }) {
-  const uid = await requireUserId();
-  await setDoc(doc(getDb(), 'users', uid), {
-    email: String(email || getFirebaseAuth().currentUser?.email || '').trim(),
-    ad: String(ad || '').trim(),
-    soyad: String(soyad || '').trim(),
-    role: 'user',
-    createdAt: serverTimestamp(),
-  });
+function displayNameParcala(displayName) {
+  const metin = String(displayName || '').trim();
+  if (!metin) return { ad: '', soyad: '' };
+  const parcalar = metin.split(/\s+/).filter(Boolean);
+  if (parcalar.length === 1) return { ad: parcalar[0], soyad: '' };
+  return {
+    ad: parcalar.slice(0, -1).join(' '),
+    soyad: parcalar[parcalar.length - 1],
+  };
 }
 
-export async function ensureUserProfile({ ad, soyad, email } = {}) {
+function profilTemelAlanlar({ ad, soyad, email, telefon } = {}) {
+  const authUser = getFirebaseAuth().currentUser;
+  let adVal = String(ad || '').trim();
+  let soyadVal = String(soyad || '').trim();
+  if (!adVal && !soyadVal && authUser?.displayName) {
+    const p = displayNameParcala(authUser.displayName);
+    adVal = p.ad;
+    soyadVal = p.soyad;
+  }
+  const emailVal = String(email || authUser?.email || '').trim();
+  const telefonVal = String(telefon || '').trim();
+  const gorunenAd =
+    adVal && soyadVal ? `${adVal} ${soyadVal.charAt(0).toUpperCase()}.` : adVal || '';
+  return {
+    email: emailVal,
+    ad: adVal,
+    soyad: soyadVal,
+    telefon: telefonVal,
+    gorunenAd,
+    kullaniciAdi: emailVal.split('@')[0] || '',
+  };
+}
+
+export async function createUserProfile({ ad, soyad, email, telefon }) {
+  const uid = await requireUserId();
+  const alanlar = profilTemelAlanlar({ ad, soyad, email, telefon });
+  await setDoc(
+    doc(getDb(), 'users', uid),
+    {
+      ...alanlar,
+      role: 'user',
+      createdAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
+  return alanlar;
+}
+
+/** Giriş / kayıt sonrası profil oluşturur veya eksik alanları doldurur */
+export async function ensureUserProfile({ ad, soyad, email, telefon } = {}) {
   const uid = await requireUserId();
   const ref = doc(getDb(), 'users', uid);
   const snap = await getDoc(ref);
-  if (snap.exists()) return snap.data();
-  await setDoc(ref, {
-    email: String(email || getFirebaseAuth().currentUser?.email || '').trim(),
-    ad: String(ad || '').trim(),
-    soyad: String(soyad || '').trim(),
-    role: 'user',
-    createdAt: serverTimestamp(),
-  });
-  return { role: 'user' };
+  const alanlar = profilTemelAlanlar({ ad, soyad, email, telefon });
+
+  if (!snap.exists()) {
+    await setDoc(
+      ref,
+      {
+        ...alanlar,
+        role: 'user',
+        createdAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+    return { role: 'user', ...alanlar };
+  }
+
+  const mevcut = snap.data() || {};
+  const yama = {};
+  if (!String(mevcut.ad || '').trim() && alanlar.ad) yama.ad = alanlar.ad;
+  if (!String(mevcut.soyad || '').trim() && alanlar.soyad) yama.soyad = alanlar.soyad;
+  if (!String(mevcut.telefon || '').trim() && alanlar.telefon) yama.telefon = alanlar.telefon;
+  if (!String(mevcut.email || '').trim() && alanlar.email) yama.email = alanlar.email;
+  if (!String(mevcut.gorunenAd || '').trim() && alanlar.gorunenAd) {
+    yama.gorunenAd = alanlar.gorunenAd;
+  }
+  if (!String(mevcut.kullaniciAdi || '').trim() && alanlar.kullaniciAdi) {
+    yama.kullaniciAdi = alanlar.kullaniciAdi;
+  }
+
+  if (Object.keys(yama).length > 0) {
+    yama.updatedAt = serverTimestamp();
+    await setDoc(ref, yama, { merge: true });
+  }
+
+  return { ...mevcut, ...yama };
+}
+
+export async function getUserProfile() {
+  const uid = await requireUserId();
+  const ref = doc(getDb(), 'users', uid);
+  const snap = await getDoc(ref);
+  const authUser = getFirebaseAuth().currentUser;
+  const data = snap.exists() ? snap.data() : {};
+  const email = data.email || authUser?.email || '';
+  return {
+    uid,
+    email,
+    ad: data.ad || '',
+    soyad: data.soyad || '',
+    telefon: data.telefon || '',
+    gorunenAd: data.gorunenAd || '',
+    kullaniciAdi: data.kullaniciAdi || String(email).split('@')[0] || '',
+    role: data.role || 'user',
+    verified: !!data.verified,
+  };
+}
+
+export async function updateUserProfile({ ad, soyad, telefon, gorunenAd } = {}) {
+  const uid = await requireUserId();
+  const ref = doc(getDb(), 'users', uid);
+  const snap = await getDoc(ref);
+  const mevcut = snap.exists() ? snap.data() : {};
+  const yeni = {
+    ...mevcut,
+    ad: ad !== undefined ? String(ad).trim() : mevcut.ad,
+    soyad: soyad !== undefined ? String(soyad).trim() : mevcut.soyad,
+    telefon: telefon !== undefined ? String(telefon).trim() : mevcut.telefon,
+    gorunenAd: gorunenAd !== undefined ? String(gorunenAd).trim() : mevcut.gorunenAd,
+    email: mevcut.email || getFirebaseAuth().currentUser?.email || '',
+    updatedAt: serverTimestamp(),
+  };
+  if (!snap.exists()) {
+    yeni.role = 'user';
+    yeni.createdAt = serverTimestamp();
+  }
+  await setDoc(ref, yeni, { merge: true });
+  const auth = getFirebaseAuth();
+  const displayName =
+    (yeni.gorunenAd || `${yeni.ad || ''} ${yeni.soyad || ''}`.trim()).trim();
+  if (displayName && auth.currentUser) {
+    await updateProfile(auth.currentUser, { displayName });
+  }
+  return yeni;
+}
+
+/** Başka kullanıcının görünen adı (favori satıcı vb.) */
+export async function getUserPublicProfile(uid) {
+  if (!uid) return null;
+  const snap = await getDoc(doc(getDb(), 'users', String(uid)));
+  if (!snap.exists()) return { uid, ad: 'Satıcı' };
+  const d = snap.data() || {};
+  const ad =
+    d.gorunenAd ||
+    `${d.ad || ''} ${d.soyad || ''}`.trim() ||
+    d.email ||
+    'Satıcı';
+  return { uid, ad, email: d.email || '' };
+}
+
+export async function setUserVerified(verified) {
+  const uid = await requireUserId();
+  await setDoc(
+    doc(getDb(), 'users', uid),
+    { verified: !!verified, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
 }
 
 export async function getCurrentUserRole() {
@@ -177,23 +367,31 @@ export const adminDeleteIlan = async (id) => {
   return { message: 'İlan silindi' };
 };
 
-const DETAY_ALAN_ANAHTARLARI = new Set([
-  'ilanTuru', 'emlakTipi', 'metrekare', 'odaSayisi', 'binaYasi', 'kat',
-  'aracTipi', 'marka', 'model', 'yil', 'kilometre', 'yakit', 'vites',
-  'urunTipi', 'durum',
-]);
-
 export const adminUpdateIlan = async (id, ilan) => {
   await requireAdmin();
   const kaynak = ilan || {};
-  const { baslik, aciklama, fiyat, platformlar, kategori, ...rest } = kaynak;
-  const detay = {};
+  const {
+    baslik,
+    aciklama,
+    fiyat,
+    platformlar,
+    kategori,
+    kategoriId,
+    kategoriYolu,
+    kategoriEtiket,
+    kategoriKok,
+    konum,
+    ornek,
+    ...rest
+  } = kaynak;
+  const detayMevcut = (await getDoc(doc(getDb(), 'ilanlar', String(id)))).data()?.detay || {};
+  const detay = { ...detayMevcut };
   Object.entries(rest).forEach(([key, value]) => {
-    if (DETAY_ALAN_ANAHTARLARI.has(key) && value != null && String(value).trim() !== '') {
+    if (value != null && String(value).trim() !== '') {
       detay[key] = value;
     }
   });
-  await updateDoc(doc(getDb(), 'ilanlar', String(id)), {
+  const guncelleme = {
     baslik,
     aciklama,
     fiyat,
@@ -201,8 +399,83 @@ export const adminUpdateIlan = async (id, ilan) => {
     kategori,
     detay,
     updatedAt: serverTimestamp(),
-  });
-  return { id, baslik, aciklama, fiyat, platformlar, kategori, ...detay };
+  };
+  if (kategoriId != null) guncelleme.kategoriId = kategoriId;
+  if (Array.isArray(kategoriYolu)) guncelleme.kategoriYolu = kategoriYolu;
+  if (kategoriEtiket != null) guncelleme.kategoriEtiket = kategoriEtiket;
+  if (kategoriKok != null) guncelleme.kategoriKok = kategoriKok;
+  if (konum !== undefined) {
+    guncelleme.konum = konum && konum.latitude != null ? konum : null;
+  }
+  if (ornek !== undefined) guncelleme.ornek = !!ornek;
+  await updateDoc(doc(getDb(), 'ilanlar', String(id)), guncelleme);
+  return { id, baslik, aciklama, fiyat, platformlar, kategori, kategoriId, kategoriKok, ...detay };
+};
+
+function firestoreHataMesaji(error) {
+  const code = error?.code || '';
+  if (code === 'permission-denied') {
+    return 'Firestore izni reddedildi. Admin rolünüzü ve e-posta doğrulamanızı kontrol edin.';
+  }
+  if (code === 'unavailable') {
+    return 'Firestore şu an kullanılamıyor. İnternet bağlantınızı kontrol edin.';
+  }
+  return error?.message || 'Örnek ilanlar yüklenemedi.';
+}
+
+/** Admin: vitrin için örnek ilanları Firestore'a ekler */
+export const adminOrnekIlanlariYukle = async ({ ustuneYaz = false } = {}) => {
+  await requireAdmin();
+  const uid = await requireUserId();
+  const db = getDb();
+
+  try {
+    const snap = await getDocs(ilanCol());
+    const mevcutOrnek = snap.docs.filter((d) => d.data()?.ornek === true);
+    const mevcutBasliklar = new Set(
+      mevcutOrnek.map((d) => d.data()?.baslik).filter(Boolean)
+    );
+
+    if (!ustuneYaz && mevcutOrnek.length >= ORNEK_ILANLAR.length) {
+      return {
+        eklendi: 0,
+        atlandi: true,
+        mevcut: mevcutOrnek.length,
+        mesaj: `${mevcutOrnek.length} örnek ilan zaten var. Eksikleri eklemek için tekrar yükleyin.`,
+      };
+    }
+
+    const batch = writeBatch(db);
+    let eklendi = 0;
+
+    for (const ornek of ORNEK_ILANLAR) {
+      if (!ustuneYaz && mevcutBasliklar.has(ornek.baslik)) continue;
+      const { detay, ...ust } = ornek;
+      const ref = doc(ilanCol());
+      batch.set(ref, {
+        ownerId: uid,
+        ornek: true,
+        ...ust,
+        detay: detay || {},
+        createdAt: serverTimestamp(),
+      });
+      eklendi += 1;
+    }
+
+    if (eklendi === 0) {
+      return {
+        eklendi: 0,
+        atlandi: true,
+        mevcut: mevcutOrnek.length,
+        mesaj: 'Eklenecek yeni örnek ilan yok (hepsi zaten mevcut).',
+      };
+    }
+
+    await batch.commit();
+    return { eklendi, atlandi: false, mesaj: `${eklendi} örnek ilan eklendi.` };
+  } catch (error) {
+    throw new Error(firestoreHataMesaji(error));
+  }
 };
 
 export const adminGetAllUsers = async () => {

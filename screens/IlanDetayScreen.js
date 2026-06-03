@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState, useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,48 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import { deleteIlan } from '../api';
+import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { deleteIlan, getUserPublicProfile } from '../api';
+import { getOrCreateKonusma } from '../api/mesajlar';
 import { getCurrentUserId } from '../auth';
-import { colors, radius, shadow, getKategoriMeta, formatFiyat } from '../constants/theme';
+import { girisIste } from '../utils/requireAuth';
+import { mesajDetayGit } from '../utils/mesajNav';
+import {
+  isFavoriIlan,
+  toggleFavoriIlan,
+  isFavoriSatici,
+  toggleFavoriSatici,
+} from '../utils/profilStorage';
+import { konumHaritadaAc, formatKonumEtiket } from '../utils/konum';
+import { colors, radius, shadow, spacing, getKategoriMeta, formatFiyat } from '../constants/theme';
 
 const DETAY_ETIKETLER = {
   ilanTuru: 'İlan Türü',
   emlakTipi: 'Emlak Tipi',
   metrekare: 'Metrekare',
+  metrekareBrut: 'm² (Brüt)',
+  metrekareNet: 'm² (Net)',
   odaSayisi: 'Oda Sayısı',
   binaYasi: 'Bina Yaşı',
-  kat: 'Kat',
+  kat: 'Bulunduğu Kat',
+  katSayisi: 'Kat Sayısı',
+  isitma: 'Isıtma',
+  banyoSayisi: 'Banyo Sayısı',
+  mutfak: 'Mutfak',
+  balkon: 'Balkon',
+  asansor: 'Asansör',
+  otopark: 'Otopark',
+  esyali: 'Eşyalı',
+  kullanimDurumu: 'Kullanım Durumu',
+  aidat: 'Aidat (TL)',
+  krediyeUygun: 'Krediye Uygun',
+  enerjiKimlik: 'Enerji Kimlik Belgesi',
+  tapuDurumu: 'Tapu Durumu',
+  tasinmazNo: 'Taşınmaz Numarası',
+  kimden: 'Kimden',
+  takasli: 'Takaslı',
+  imarDurumu: 'İmar Durumu',
   aracTipi: 'Araç Tipi',
   marka: 'Marka',
   model: 'Model',
@@ -34,6 +65,81 @@ export default function IlanDetayScreen({ navigation, route }) {
   const sahibi = getCurrentUserId() && ilan.ownerId === getCurrentUserId();
   const meta = getKategoriMeta(ilan.kategori);
   const platformlar = Array.isArray(ilan.platformlar) ? ilan.platformlar : [];
+  const konumMetni = formatKonumEtiket(ilan.konum);
+  const [favori, setFavori] = useState(false);
+  const [saticiFavori, setSaticiFavori] = useState(false);
+  const [saticiAd, setSaticiAd] = useState('');
+
+  const favoriDurumunuYukle = useCallback(async () => {
+    if (!ilan.id) return;
+    setFavori(await isFavoriIlan(ilan.id));
+    if (ilan.ownerId && !sahibi) {
+      setSaticiFavori(await isFavoriSatici(ilan.ownerId));
+      const profil = await getUserPublicProfile(ilan.ownerId).catch(() => null);
+      if (profil?.ad) setSaticiAd(profil.ad);
+    }
+  }, [ilan.id, ilan.ownerId, sahibi]);
+
+  useFocusEffect(
+    useCallback(() => {
+      favoriDurumunuYukle();
+    }, [favoriDurumunuYukle])
+  );
+
+  const mesajAt = useCallback(async () => {
+    if (!girisIste(navigation, 'Mesaj göndermek için giriş yapın.')) return;
+    if (!ilan.id || !ilan.ownerId) {
+      Alert.alert('Uyarı', 'Bu ilan için mesaj başlatılamıyor.');
+      return;
+    }
+    try {
+      const k = await getOrCreateKonusma({
+        ilanId: ilan.id,
+        ilanBaslik: ilan.baslik,
+        ownerId: ilan.ownerId,
+      });
+      mesajDetayGit(navigation, {
+        konusmaId: k.id,
+        ilanBaslik: k.ilanBaslik,
+        ilanId: k.ilanId,
+        karsiAd: k.digerAd,
+      });
+    } catch (e) {
+      Alert.alert('Mesaj', e?.message || 'Sohbet başlatılamadı.');
+    }
+  }, [navigation, ilan]);
+
+  const favoriToggle = useCallback(async () => {
+    if (!girisIste(navigation, 'Favorilere eklemek için giriş yapın.')) return;
+    if (!ilan.id) return;
+    const eklendi = await toggleFavoriIlan(ilan);
+    setFavori(eklendi);
+  }, [navigation, ilan]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={favoriToggle} hitSlop={12} style={styles.headerFavori}>
+          <Ionicons
+            name={favori ? 'star' : 'star-outline'}
+            size={26}
+            color={favori ? '#FACC15' : colors.primaryText}
+          />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, favori, favoriToggle]);
+
+  const saticiFavoriToggle = async () => {
+    if (!girisIste(navigation, 'Satıcıyı favorilere eklemek için giriş yapın.')) return;
+    if (!ilan.ownerId) return;
+    const eklendi = await toggleFavoriSatici({
+      ownerId: ilan.ownerId,
+      ad: saticiAd || 'Satıcı',
+      alt: ilan.kategoriEtiket || ilan.kategori || '',
+    });
+    setSaticiFavori(eklendi);
+  };
 
   const detaySatirlari = Object.entries(DETAY_ETIKETLER)
     .filter(([key]) => ilan[key])
@@ -74,6 +180,42 @@ export default function IlanDetayScreen({ navigation, route }) {
         <Text style={styles.aciklama}>{ilan.aciklama}</Text>
       </View>
 
+      {konumMetni ? (
+        <TouchableOpacity
+          style={styles.kart}
+          onPress={() => konumHaritadaAc(ilan.konum)}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.bolumBaslik}>Konum</Text>
+          <View style={styles.konumSatir}>
+            <Ionicons name="location" size={22} color={colors.primary} />
+            <Text style={styles.konumMetin}>{konumMetni}</Text>
+          </View>
+          <Text style={styles.konumHarita}>Haritada göster →</Text>
+        </TouchableOpacity>
+      ) : null}
+
+      {ilan.ownerId && !sahibi ? (
+        <View style={styles.kart}>
+          <Text style={styles.bolumBaslik}>İlan sahibi</Text>
+          <Text style={styles.saticiAd}>{saticiAd || 'Satıcı'}</Text>
+          <TouchableOpacity style={styles.mesajBtn} onPress={mesajAt} activeOpacity={0.85}>
+            <Ionicons name="chatbubble-outline" size={20} color={colors.primaryText} />
+            <Text style={styles.mesajBtnText}>Mesaj gönder</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.saticiFavoriBtn} onPress={saticiFavoriToggle}>
+            <Ionicons
+              name={saticiFavori ? 'star' : 'star-outline'}
+              size={20}
+              color={saticiFavori ? '#FACC15' : colors.primary}
+            />
+            <Text style={styles.saticiFavoriText}>
+              {saticiFavori ? 'Favori satıcıdan çıkar' : 'Favori satıcılarıma ekle'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
       {detaySatirlari.length > 0 ? (
         <View style={styles.kart}>
           <Text style={styles.bolumBaslik}>İlan Detayları</Text>
@@ -111,6 +253,7 @@ export default function IlanDetayScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { paddingBottom: 32 },
+  headerFavori: { marginRight: 8 },
   hero: {
     height: 180,
     alignItems: 'center',
@@ -149,6 +292,28 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 12,
   },
+  saticiAd: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: spacing.md },
+  mesajBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingVertical: 12,
+    marginBottom: spacing.md,
+  },
+  mesajBtnText: { color: colors.primaryText, fontSize: 15, fontWeight: '700' },
+  saticiFavoriBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+  },
+  saticiFavoriText: { fontSize: 14, fontWeight: '600', color: colors.primary },
+  konumSatir: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  konumMetin: { flex: 1, fontSize: 15, color: colors.text, lineHeight: 22 },
+  konumHarita: { fontSize: 14, fontWeight: '600', color: colors.link, marginTop: spacing.sm },
   detaySatir: {
     flexDirection: 'row',
     justifyContent: 'space-between',

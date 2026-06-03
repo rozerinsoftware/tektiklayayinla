@@ -2,6 +2,7 @@
   "expo": {
     "name": "TekTıklaYayınla",
     "slug": "tektiklayayinla",
+    "scheme": "tektiklayayinla",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,15 +13,51 @@
       "backgroundColor": "#2563EB"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rozerinbeyazit.tektiklayayinla",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "İlanınızın konumunu işaretlemek için konumunuza ihtiyaç duyuyoruz."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2563EB"
       },
-      "package": "com.anonymous.tektiklayayinla"
+      "package": "com.rozerinbeyazit.tektiklayayinla",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "tektiklayayinla.firebaseapp.com",
+              "pathPrefix": "/__/auth/action"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        },
+        {
+          "action": "VIEW",
+          "data": [{ "scheme": "tektiklayayinla" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "İlan konumunu işaretlemek için konum izni gerekir."
+        }
+      ],
+      "./plugins/withAndroidMapQueries.js"
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     },

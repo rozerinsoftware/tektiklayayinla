@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PrimaryButton, Card } from '../components/ui';
 import { colors, radius, spacing, formatFiyat, getKategoriMeta } from '../constants/theme';
@@ -15,19 +15,28 @@ function anaSayfayaGit(navigation) {
 }
 
 export default function YayinlaScreen({ navigation, route }) {
-  const { ilan } = route.params;
+  const { ilan, guncelleme } = route.params;
   const platformlar = Array.isArray(ilan?.platformlar) ? ilan.platformlar : [];
   const metaKey = ilan?.kategoriKok ? kokIdToMetaKey(ilan.kategoriKok) : ilan?.kategori;
   const meta = getKategoriMeta(metaKey);
+
+  const baskaIlanVer = () => {
+    navigation.getParent()?.navigate('İlan Ver', { screen: 'KategoriAna' });
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.basarili}>
         <View style={styles.basariliIcon}>
-          <Ionicons name="checkmark-circle" size={64} color={colors.success} />
+          <Ionicons name="checkmark-circle" size={64} color="#0D9488" />
         </View>
-        <Text style={styles.baslik}>İlanınız Yayınlandı!</Text>
-        <Text style={styles.alt}>Seçtiğiniz platformlarda simülasyon olarak işaretlendi.</Text>
+        <Text style={styles.baslik}>Tebrikler</Text>
+        <Text style={styles.alt}>
+          {guncelleme
+            ? 'İlanınız güncellendi ve yayında.'
+            : 'İlanınız kontrol edildikten sonra yayınlanacaktır.'}
+        </Text>
+        {ilan?.id ? <Text style={styles.ilanNo}>İlan no: {ilan.id}</Text> : null}
       </View>
 
       <Card>
@@ -58,10 +67,15 @@ export default function YayinlaScreen({ navigation, route }) {
       </Card>
 
       <PrimaryButton
-        title="Ana Sayfaya Dön"
+        title="Ana ekrana dön"
         icon="home-outline"
         onPress={() => anaSayfayaGit(navigation)}
       />
+      {!guncelleme ? (
+        <TouchableOpacity style={styles.ikinciBtn} onPress={baskaIlanVer}>
+          <Text style={styles.ikinciBtnText}>Bir ilan daha ver</Text>
+        </TouchableOpacity>
+      ) : null}
     </ScrollView>
   );
 }
@@ -71,8 +85,18 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: 40 },
   basarili: { alignItems: 'center', marginBottom: spacing.lg },
   basariliIcon: { marginBottom: spacing.md },
-  baslik: { fontSize: 24, fontWeight: '800', color: colors.text },
+  baslik: { fontSize: 24, fontWeight: '800', color: '#0D9488' },
   alt: { fontSize: 14, color: colors.textSecondary, marginTop: 6, textAlign: 'center' },
+  ilanNo: { fontSize: 14, fontWeight: '700', color: colors.link, marginTop: spacing.sm },
+  ikinciBtn: {
+    marginTop: spacing.md,
+    paddingVertical: 14,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+  },
+  ikinciBtnText: { color: colors.primary, fontWeight: '700', fontSize: 16 },
   kategoriStrip: {
     flexDirection: 'row',
     alignItems: 'center',

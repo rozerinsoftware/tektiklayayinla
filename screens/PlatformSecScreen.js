@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Image, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { addIlan } from '../api';
+import { addIlan, updateIlan } from '../api';
 import { PrimaryButton, SectionTitle } from '../components/ui';
 import { colors, radius, shadow, spacing } from '../constants/theme';
 
@@ -15,7 +15,7 @@ const PLATFORMLAR = [
 export default function PlatformSecScreen({ navigation, route }) {
   const [secilenler, setSecilenler] = useState([]);
   const [yayinlaniyor, setYayinlaniyor] = useState(false);
-  const { yeniIlan } = route.params;
+  const { yeniIlan, duzenlemeId } = route.params;
 
   const platformSec = (platform) => {
     setSecilenler((prev) =>
@@ -42,8 +42,13 @@ export default function PlatformSecScreen({ navigation, route }) {
     try {
       setYayinlaniyor(true);
       const tamamlananIlan = { ...ilan, platformlar: secilenler };
-      await addIlan(tamamlananIlan);
-      navigation.navigate('Yayinla', { ilan: tamamlananIlan });
+      if (duzenlemeId) {
+        await updateIlan(duzenlemeId, tamamlananIlan);
+        navigation.navigate('Yayinla', { ilan: { ...tamamlananIlan, id: duzenlemeId }, guncelleme: true });
+      } else {
+        const kayit = await addIlan(tamamlananIlan);
+        navigation.navigate('Yayinla', { ilan: kayit });
+      }
     } catch (error) {
       const message =
         error?.response?.data?.message ||

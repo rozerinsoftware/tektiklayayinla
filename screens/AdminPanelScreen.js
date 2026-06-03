@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { adminDeleteIlan, adminGetAllIlanlar, adminGetAllUsers } from '../api';
+import { adminDeleteIlan, adminGetAllIlanlar, adminGetAllUsers, adminOrnekIlanlariYukle } from '../api';
 import IlanKart from '../components/IlanKart';
 import { colors, radius, shadow, spacing } from '../constants/theme';
 
@@ -19,6 +19,8 @@ export default function AdminPanelScreen({ navigation }) {
   const [ilanlar, setIlanlar] = useState([]);
   const [kullanicilar, setKullanicilar] = useState([]);
   const [yukleniyor, setYukleniyor] = useState(true);
+  const [ornekYukleniyor, setOrnekYukleniyor] = useState(false);
+  const [ornekDurum, setOrnekDurum] = useState(null);
   const [sekme, setSekme] = useState('ilanlar');
 
   const verileriYukle = async () => {
@@ -42,6 +44,31 @@ export default function AdminPanelScreen({ navigation }) {
       verileriYukle();
     }, [])
   );
+
+  const ornekIlanlariYukle = () => {
+    Alert.alert(
+      'Örnek ilanları yükle',
+      'Vitrin ve kategoriler için 10 demo ilan eklenir. Zaten varsa atlanır. Admin panelinden düzenleyebilirsiniz.',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Yükle',
+          onPress: async () => {
+            try {
+              setYukleniyor(true);
+              const sonuc = await adminOrnekIlanlariYukle();
+              Alert.alert('Tamam', sonuc.mesaj);
+              await verileriYukle();
+            } catch (error) {
+              Alert.alert('Hata', error?.message || 'Yüklenemedi.');
+            } finally {
+              setYukleniyor(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const ilanSil = (id, baslik) => {
     Alert.alert('İlanı Sil', `"${baslik}" silinsin mi?`, [
@@ -101,43 +128,90 @@ export default function AdminPanelScreen({ navigation }) {
       </View>
 
       {sekme === 'ilanlar' ? (
-        <FlatList
-          data={ilanlar}
-          keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={styles.listContent}
-          refreshControl={<RefreshControl refreshing={yukleniyor} onRefresh={verileriYukle} />}
-          ListEmptyComponent={
-            <View style={styles.bosWrap}>
-              <Ionicons name="document-text-outline" size={48} color={colors.textMuted} />
-              <Text style={styles.bos}>Henüz ilan yok.</Text>
-            </View>
-          }
-          renderItem={({ item }) => (
-            <View style={styles.ilanSatir}>
-              <View style={styles.ilanKartWrap}>
-                <IlanKart
-                  ilan={item}
-                  compact
-                  onPress={() => navigation.navigate('AdminIlanDuzenle', { ilan: item })}
-                />
-              </View>
-              <View style={styles.aksiyonSatir}>
+        <View style={styles.ilanlarWrap}>
+          <TouchableOpacity
+            style={[styles.ornekBtn, ornekYukleniyor && styles.ornekBtnDisabled]}
+            onPress={() => ornekIlanlariYukle(false)}
+            activeOpacity={0.85}
+            disabled={ornekYukleniyor}
+          >
+            {ornekYukleniyor ? (
+              <ActivityIndicator color={colors.primaryText} />
+            ) : (
+              <Ionicons name="cloud-download-outline" size={20} color={colors.primaryText} />
+            )}
+            <Text style={styles.ornekBtnText}>
+              {ornekYukleniyor ? 'Yükleniyor…' : 'Örnek ilanları yükle (vitrin demo)'}
+            </Text>
+          </TouchableOpacity>
+          {ornekDurum ? (
+            <View
+              style={[
+                styles.ornekDurumKutu,
+                ornekDurum.type === 'ok' && styles.ornekDurumOk,
+                ornekDurum.type === 'info' && styles.ornekDurumInfo,
+                ornekDurum.type === 'err' && styles.ornekDurumErr,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.ornekDurumText,
+                  ornekDurum.type === 'ok' && styles.ornekDurumTextOk,
+                  ornekDurum.type === 'info' && styles.ornekDurumTextInfo,
+                  ornekDurum.type === 'err' && styles.ornekDurumTextErr,
+                ]}
+              >
+                {ornekDurum.text}
+              </Text>
+              {ornekDurum.yenidenGoster ? (
                 <TouchableOpacity
-                  style={styles.duzenleButon}
-                  onPress={() => navigation.navigate('AdminIlanDuzenle', { ilan: item })}
+                  style={styles.ornekTekrarBtn}
+                  onPress={() => ornekIlanlariYukle(true)}
+                  disabled={ornekYukleniyor}
                 >
-                  <Ionicons name="create-outline" size={18} color={colors.primaryText} />
-                  <Text style={styles.duzenleButonText}>Düzenle</Text>
+                  <Text style={styles.ornekTekrarBtnText}>Eksikleri ekle</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.silButon} onPress={() => ilanSil(item.id, item.baslik)}>
-                  <Ionicons name="trash-outline" size={18} color={colors.danger} />
-                  <Text style={styles.silButonText}>Sil</Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.ownerMeta}>Sahip: {item.ownerId || '—'}</Text>
+              ) : null}
             </View>
-          )}
-        />
+          ) : null}
+          <FlatList
+            data={ilanlar}
+            keyExtractor={(item) => String(item.id)}
+            contentContainerStyle={styles.listContent}
+            refreshControl={<RefreshControl refreshing={yukleniyor} onRefresh={verileriYukle} />}
+            ListEmptyComponent={
+              <View style={styles.bosWrap}>
+                <Ionicons name="document-text-outline" size={48} color={colors.textMuted} />
+                <Text style={styles.bos}>Henüz ilan yok.</Text>
+              </View>
+            }
+            renderItem={({ item }) => (
+              <View style={styles.ilanSatir}>
+                <View style={styles.ilanKartWrap}>
+                  <IlanKart
+                    ilan={item}
+                    compact
+                    onPress={() => navigation.navigate('AdminIlanDuzenle', { ilan: item })}
+                  />
+                </View>
+                <View style={styles.aksiyonSatir}>
+                  <TouchableOpacity
+                    style={styles.duzenleButon}
+                    onPress={() => navigation.navigate('AdminIlanDuzenle', { ilan: item })}
+                  >
+                    <Ionicons name="create-outline" size={18} color={colors.primaryText} />
+                    <Text style={styles.duzenleButonText}>Düzenle</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.silButon} onPress={() => ilanSil(item.id, item.baslik)}>
+                    <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                    <Text style={styles.silButonText}>Sil</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.ownerMeta}>Sahip: {item.ownerId || '—'}</Text>
+              </View>
+            )}
+          />
+        </View>
       ) : (
         <FlatList
           data={kullanicilar}
@@ -201,6 +275,44 @@ const styles = StyleSheet.create({
   sekmeText: { color: colors.textMuted, fontWeight: '600', fontSize: 14 },
   sekmeTextAktif: { color: colors.primary, fontWeight: '700' },
   listContent: { padding: spacing.md, paddingBottom: 24 },
+  ilanlarWrap: { flex: 1 },
+  ornekBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    marginBottom: spacing.sm,
+    paddingVertical: 12,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+  },
+  ornekBtnText: { color: colors.primaryText, fontWeight: '700', fontSize: 14 },
+  ornekBtnDisabled: { opacity: 0.7 },
+  ornekDurumKutu: {
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+  },
+  ornekDurumOk: { backgroundColor: '#ECFDF5', borderColor: '#6EE7B7' },
+  ornekDurumInfo: { backgroundColor: '#EFF6FF', borderColor: '#93C5FD' },
+  ornekDurumErr: { backgroundColor: '#FEF2F2', borderColor: '#FCA5A5' },
+  ornekDurumText: { fontSize: 13, lineHeight: 18 },
+  ornekDurumTextOk: { color: '#047857' },
+  ornekDurumTextInfo: { color: '#1D4ED8' },
+  ornekDurumTextErr: { color: '#B91C1C' },
+  ornekTekrarBtn: {
+    marginTop: spacing.sm,
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
+  },
+  ornekTekrarBtnText: { color: colors.primaryText, fontWeight: '700', fontSize: 12 },
   ilanSatir: { marginBottom: spacing.lg },
   ilanKartWrap: { marginBottom: spacing.sm },
   ownerMeta: { fontSize: 11, color: colors.textMuted, marginTop: 4, paddingHorizontal: 4 },

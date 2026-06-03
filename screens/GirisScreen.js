@@ -4,14 +4,14 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { signIn } from '../auth';
+import { signIn, resendVerificationEmail, kontrolEmailOnaylandi } from '../auth';
 import { ensureUserProfile } from '../api';
 import { AppInput, PrimaryButton } from '../components/ui';
 import { colors, radius, shadow, spacing } from '../constants/theme';
@@ -44,7 +44,7 @@ function girisSonrasiGit(navigation, afterLogin) {
 
 export default function GirisScreen({ navigation, route }) {
   const afterLogin = route.params?.afterLogin;
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(route.params?.email || '');
   const [sifre, setSifre] = useState('');
   const [yukleniyor, setYukleniyor] = useState(false);
 
@@ -65,6 +65,53 @@ export default function GirisScreen({ navigation, route }) {
         mesaj = 'E-posta veya şifre hatalı.';
       } else if (kod === 'auth/invalid-email') {
         mesaj = 'Geçerli bir e-posta adresi girin.';
+      } else if (kod === 'auth/email-not-verified') {
+        Alert.alert(
+          'E-posta onayı gerekli',
+          `${mesaj}\n\nNot: Daha önce oluşturduğunuz hesaplar için de bir kez onay gerekir (Sahibinden gibi). Gönderen: Firebase (noreply@...) — spam klasörünü kontrol edin.`,
+          [
+            { text: 'Tamam', style: 'cancel' },
+            {
+              text: 'Tekrar gönder',
+              onPress: async () => {
+                try {
+                  setYukleniyor(true);
+                  await resendVerificationEmail(email, sifre);
+                Alert.alert(
+                  'Gönderildi',
+                  `${email.trim()} adresine onay maili gönderildi.\n\n• 2–10 dk bekleyin\n• Gelen kutusu + spam + Promosyonlar\n• Gönderen: noreply@... (Firebase)\n• Hâlâ yoksa 1 saat bekleyip tekrar deneyin (çok deneme engeli)`
+                );
+                } catch (e) {
+                  Alert.alert('Hata', e?.message || 'Gönderilemedi.');
+                } finally {
+                  setYukleniyor(false);
+                }
+              },
+            },
+            {
+              text: 'Onayladım',
+              onPress: async () => {
+                try {
+                  setYukleniyor(true);
+                  const onayli = await kontrolEmailOnaylandi(email, sifre);
+                  if (onayli) {
+                    Alert.alert('Başarılı', 'E-postanız onaylı. Şimdi Giriş yapın.');
+                  } else {
+                    Alert.alert(
+                      'Henüz onay yok',
+                      'Bağlantıya tıkladıysanız 1–2 dk bekleyip tekrar deneyin veya Tekrar gönder deyin.'
+                    );
+                  }
+                } catch (e) {
+                  Alert.alert('Hata', e?.message || 'Kontrol edilemedi.');
+                } finally {
+                  setYukleniyor(false);
+                }
+              },
+            },
+          ]
+        );
+        return;
       }
       Alert.alert('Giriş Hatası', mesaj);
     } finally {
@@ -107,7 +154,7 @@ export default function GirisScreen({ navigation, route }) {
             <PrimaryButton title="Giriş Yap" icon="log-in-outline" onPress={girisYap} loading={yukleniyor} />
           </View>
 
-          <TouchableOpacity style={styles.kayitLink} onPress={() => navigation.navigate('Kayit')}>
+          <TouchableOpacity style={styles.kayitLink} onPress={() => navigation.navigate('KayitEmail')}>
             <Ionicons name="person-add-outline" size={18} color={colors.primaryText} />
             <Text style={styles.kayitLinkText}>Hesap Oluştur</Text>
           </TouchableOpacity>
