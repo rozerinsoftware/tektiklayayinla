@@ -176,6 +176,11 @@ export async function mesajGonder(konusmaId, metin) {
     sonGonderenId: uid,
     sonMesajAt: serverTimestamp(),
   });
+
+  if (k.ilanId && uid !== k.ownerId) {
+    const { incrementIlanStat } = await import('../api');
+    incrementIlanStat(k.ilanId, 'mesajSayisi');
+  }
 }
 
 export async function konusmaOkunduIsaretle(konusmaId) {

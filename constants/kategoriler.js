@@ -38,8 +38,23 @@ export const KOK_KATEGORILER = [
           { id: 'devren-satilik-konut', baslik: 'Devren Satılık Konut', yaprak: true },
         ],
       },
-      { id: 'is-yeri', baslik: 'İş Yeri', yaprak: true },
-      { id: 'arsa', baslik: 'Arsa', yaprak: true },
+      {
+        id: 'is-yeri',
+        baslik: 'İş Yeri',
+        cocuklar: [
+          { id: 'is-yeri-satilik', baslik: 'Satılık', yaprak: true },
+          { id: 'is-yeri-kiralik', baslik: 'Kiralık', yaprak: true },
+          { id: 'is-yeri-devren', baslik: 'Devren', yaprak: true },
+        ],
+      },
+      {
+        id: 'arsa',
+        baslik: 'Arsa',
+        cocuklar: [
+          { id: 'arsa-satilik', baslik: 'Satılık', yaprak: true },
+          { id: 'arsa-kiralik', baslik: 'Kiralık', yaprak: true },
+        ],
+      },
       { id: 'konut-projeleri', baslik: 'Konut Projeleri', yaprak: true },
       { id: 'bina', baslik: 'Bina', yaprak: true },
       { id: 'devre-mulk', baslik: 'Devre Mülk', yaprak: true },
@@ -90,19 +105,23 @@ export const KOK_KATEGORILER = [
 
 /** Düz harita: id → { düğüm, yol id'leri, yol başlıkları, kök id } */
 const _index = new Map();
+/** Tam yol: emlak/konut/kiralik gibi — aynı id birden fazla dalda olabiliyor */
+const _pathIndex = new Map();
 
 function walk(nodes, yolIds = [], yolBaslik = [], kokId = null) {
   nodes.forEach((node) => {
     const kok = kokId || node.id;
     const ids = [...yolIds, node.id];
     const basliklar = [...yolBaslik, node.baslik];
-    _index.set(node.id, {
+    const entry = {
       node,
       yolIds: ids,
       yolBaslik: basliklar,
       kokId: kok,
       etiket: basliklar.join(' › '),
-    });
+    };
+    _index.set(node.id, entry);
+    _pathIndex.set(ids.join('/'), entry);
     if (node.cocuklar?.length) walk(node.cocuklar, ids, basliklar, kok);
     if (node.ilgili?.length) {
       node.ilgili.forEach((ilg) => {
@@ -123,7 +142,18 @@ function walk(nodes, yolIds = [], yolBaslik = [], kokId = null) {
 
 walk(KOK_KATEGORILER);
 
-export function getKategoriById(id) {
+export function getKategoriByYol(yolIds) {
+  if (!Array.isArray(yolIds) || !yolIds.length) return null;
+  return _pathIndex.get(yolIds.join('/')) || null;
+}
+
+/** ustYolIds: üst kategori yolu (ör. ['emlak','konut']) — aynı id çakışmalarını çözer */
+export function getKategoriById(id, ustYolIds = null) {
+  if (!id) return null;
+  if (ustYolIds?.length) {
+    const byPath = getKategoriByYol([...ustYolIds, id]);
+    if (byPath) return byPath;
+  }
   return _index.get(id) || null;
 }
 
@@ -172,10 +202,12 @@ export function getIlanKategoriYolu(ilan) {
  * - Üst kategori (Satılık, Konut): altındaki tüm ilanlar
  * - Eski ilanlar (sadece kök "Emlak"): yalnızca kök kategoride görünür
  */
-export function ilanKategoriEslesir(ilan, kategoriId) {
+export function ilanKategoriEslesir(ilan, kategoriId, filtreYolu = null) {
   if (!kategoriId) return true;
 
-  const filtre = getKategoriById(kategoriId);
+  const filtre =
+    (Array.isArray(filtreYolu) && filtreYolu.length ? getKategoriByYol(filtreYolu) : null) ||
+    getKategoriById(kategoriId);
   const yol = getIlanKategoriYolu(ilan);
 
   if (ilan.kategoriId === kategoriId) return true;

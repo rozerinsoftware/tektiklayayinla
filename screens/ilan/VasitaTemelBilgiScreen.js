@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { AppInput, PrimaryButton } from '../../components/ui';
 import IlanBreadcrumb from '../../components/ilan/IlanBreadcrumb';
+import IlanFotografSec from '../../components/ilan/IlanFotografSec';
 import { colors, spacing, radius, shadow } from '../../constants/theme';
 import { kokIdToMetaKey } from '../../constants/kategoriler';
 import { otomatikBaslik, secimdenDetay, vasitaBreadcrumb } from '../../utils/vasitaSecim';
@@ -33,6 +34,7 @@ export default function VasitaTemelBilgiScreen({ navigation, route }) {
   const [aracDurumu, setAracDurumu] = useState('İkinci El');
   const [plaka, setPlaka] = useState('Türkiye (TR) Plakalı');
   const [sasi, setSasi] = useState('');
+  const [fotograflar, setFotograflar] = useState([]);
 
   const fiyatGuncelle = (text) => {
     if (/[a-zA-ZğüşıöçĞÜŞİÖÇ]/.test(text)) {
@@ -76,6 +78,7 @@ export default function VasitaTemelBilgiScreen({ navigation, route }) {
         kategoriEtiket: secilenKategori.kategoriEtiket,
         kategoriKok: 'vasita',
         vasitaSecimOzeti: secimler,
+        fotograflar,
         ...detay,
       },
       adim: 1,
@@ -93,6 +96,8 @@ export default function VasitaTemelBilgiScreen({ navigation, route }) {
       <IlanBreadcrumb parcalar={breadcrumb} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.ekranBaslik}>Temel Bilgileri Giriniz</Text>
+
+        <IlanFotografSec fotograflar={fotograflar} onChange={setFotograflar} />
 
         {ozet ? (
           <View style={styles.aracKart}>

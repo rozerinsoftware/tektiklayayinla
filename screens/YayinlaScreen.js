@@ -1,27 +1,46 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { PrimaryButton, Card } from '../components/ui';
 import { colors, radius, spacing, formatFiyat, getKategoriMeta } from '../constants/theme';
 import { kokIdToMetaKey } from '../constants/kategoriler';
 
-function anaSayfayaGit(navigation) {
+function vitrineGit(navigation) {
   const tabNav = navigation.getParent?.();
   if (tabNav) {
-    tabNav.navigate('Ana Sayfa', { screen: 'IlanListesi' });
+    tabNav.navigate('Ana Sayfa', {
+      screen: 'IlanListesi',
+      params: { yenile: Date.now() },
+    });
     return;
   }
-  navigation.navigate('IlanListesi');
+  navigation.navigate('IlanListesi', { yenile: Date.now() });
+}
+
+function ilanVerYenidenBaslat(navigation) {
+  navigation.dispatch(
+    CommonActions.reset({
+      index: 0,
+      routes: [{ name: 'KategoriAna', params: { secimModu: true } }],
+    })
+  );
 }
 
 export default function YayinlaScreen({ navigation, route }) {
-  const { ilan, guncelleme } = route.params;
+  const { ilan, guncelleme, fotoUyari } = route.params;
+
+  useEffect(() => {
+    if (fotoUyari) {
+      Alert.alert('Fotoğraf uyarısı', fotoUyari);
+    }
+  }, [fotoUyari]);
   const platformlar = Array.isArray(ilan?.platformlar) ? ilan.platformlar : [];
   const metaKey = ilan?.kategoriKok ? kokIdToMetaKey(ilan.kategoriKok) : ilan?.kategori;
   const meta = getKategoriMeta(metaKey);
 
   const baskaIlanVer = () => {
-    navigation.getParent()?.navigate('İlan Ver', { screen: 'KategoriAna' });
+    ilanVerYenidenBaslat(navigation);
   };
 
   return (
@@ -33,8 +52,8 @@ export default function YayinlaScreen({ navigation, route }) {
         <Text style={styles.baslik}>Tebrikler</Text>
         <Text style={styles.alt}>
           {guncelleme
-            ? 'İlanınız güncellendi ve yayında.'
-            : 'İlanınız kontrol edildikten sonra yayınlanacaktır.'}
+            ? 'İlanınız güncellendi ve vitrinde yayında.'
+            : 'İlanınız vitrinde yayında. Ana ekrandan görebilirsiniz.'}
         </Text>
         {ilan?.id ? <Text style={styles.ilanNo}>İlan no: {ilan.id}</Text> : null}
       </View>
@@ -67,9 +86,9 @@ export default function YayinlaScreen({ navigation, route }) {
       </Card>
 
       <PrimaryButton
-        title="Ana ekrana dön"
+        title="Vitrine git"
         icon="home-outline"
-        onPress={() => anaSayfayaGit(navigation)}
+        onPress={() => vitrineGit(navigation)}
       />
       {!guncelleme ? (
         <TouchableOpacity style={styles.ikinciBtn} onPress={baskaIlanVer}>

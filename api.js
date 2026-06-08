@@ -6,6 +6,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   query,
   serverTimestamp,
   setDoc,
@@ -15,7 +16,8 @@ import {
 } from 'firebase/firestore';
 import { getCurrentUserId, getFirebaseAuth, waitForAuth } from './auth';
 import { getDb } from './firebase';
-import { ORNEK_ILANLAR } from './constants/ornekIlanlar';
+import { ORNEK_ILANLAR, ORNEK_ESKI_BASLIKLAR } from './constants/ornekIlanlar';
+import { hazirlaIlanFotograflari } from './utils/ilanFotograf';
 
 const ilanCol = () => collection(getDb(), 'ilanlar');
 const usersCol = () => collection(getDb(), 'users');
@@ -85,6 +87,9 @@ export const addIlan = async (ilan) => {
     kategoriKok: kategoriKok || null,
     konum: konum && konum.latitude != null ? konum : null,
     detay,
+    goruntulenme: 0,
+    mesajSayisi: 0,
+    favoriSayisi: 0,
     createdAt: serverTimestamp(),
   });
   return {
@@ -170,6 +175,71 @@ export const deleteIlan = async (id) => {
   await requireUserId();
   await deleteDoc(doc(getDb(), 'ilanlar', String(id)));
   return { message: 'İlan silindi' };
+};
+
+export const getIlanById = async (id) => {
+  const snap = await getDoc(doc(getDb(), 'ilanlar', String(id)));
+  if (!snap.exists()) return null;
+  return docToIlan(snap);
+};
+
+/** Fotoğrafları Storage'a yükleyip ilanı yayınlar veya günceller */
+export const publishIlan = async (ilan, platformlar, { duzenlemeId } = {}) => {
+  const uid = await requireUserId();
+  const tamamlanan = { ...ilan, platformlar };
+
+  if (duzenlemeId) {
+    const fotograflar = await hazirlaIlanFotograflari(ilan.fotograflar || [], {
+      userId: uid,
+      ilanId: duzenlemeId,
+    });
+    return updateIlan(duzenlemeId, { ...tamamlanan, fotograflar });
+  }
+
+  const kayit = await addIlan({ ...tamamlanan, fotograflar: [] });
+  try {
+    const fotograflar = await hazirlaIlanFotograflari(ilan.fotograflar || [], {
+      userId: uid,
+      ilanId: kayit.id,
+    });
+    if (fotograflar.length) {
+      return updateIlan(kayit.id, { ...tamamlanan, fotograflar });
+    }
+    return kayit;
+  } catch (photoErr) {
+    const err = new Error(
+      photoErr?.message ||
+        'Fotoğraflar yüklenemedi. İlan metin olarak yayınlandı; düzenlemeden tekrar deneyebilirsiniz.'
+    );
+    err.code = 'photo-upload-partial';
+    err.ilanId = kayit.id;
+    err.kismiBasari = true;
+    err.kayit = kayit;
+    throw err;
+  }
+};
+
+export const updateIlanFiyat = async (id, fiyat) => {
+  const uid = await requireUserId();
+  const ref = doc(getDb(), 'ilanlar', String(id));
+  const snap = await getDoc(ref);
+  if (!snap.exists() || snap.data().ownerId !== uid) {
+    throw new Error('Bu ilanın fiyatını güncelleme yetkiniz yok.');
+  }
+  await updateDoc(ref, { fiyat: String(fiyat), updatedAt: serverTimestamp() });
+  return { id, fiyat: String(fiyat) };
+};
+
+const ISTAT_ALANLARI = ['goruntulenme', 'mesajSayisi', 'favoriSayisi'];
+
+export const incrementIlanStat = async (ilanId, alan) => {
+  if (!ilanId || !ISTAT_ALANLARI.includes(alan)) return;
+  const ref = doc(getDb(), 'ilanlar', String(ilanId));
+  try {
+    await updateDoc(ref, { [alan]: increment(1), updatedAt: serverTimestamp() });
+  } catch {
+    /* istatistik hatası ilanı bozmasın */
+  }
 };
 
 // ——— Kullanıcı profili ———
@@ -423,8 +493,8 @@ function firestoreHataMesaji(error) {
   return error?.message || 'Örnek ilanlar yüklenemedi.';
 }
 
-/** Admin: vitrin için örnek ilanları Firestore'a ekler */
-export const adminOrnekIlanlariYukle = async ({ ustuneYaz = false } = {}) => {
+/** Admin: vitrin için örnek ilanları Firestore'a ekler / günceller */
+export const adminOrnekIlanlariYukle = async ({ ustuneYaz = false, guncelle = true } = {}) => {
   await requireAdmin();
   const uid = await requireUserId();
   const db = getDb();
@@ -432,47 +502,106 @@ export const adminOrnekIlanlariYukle = async ({ ustuneYaz = false } = {}) => {
   try {
     const snap = await getDocs(ilanCol());
     const mevcutOrnek = snap.docs.filter((d) => d.data()?.ornek === true);
-    const mevcutBasliklar = new Set(
-      mevcutOrnek.map((d) => d.data()?.baslik).filter(Boolean)
-    );
+    const mevcutByKey = new Map();
+    const mevcutByBaslik = new Map();
+    mevcutOrnek.forEach((d) => {
+      const data = d.data();
+      if (data?.ornekKey) mevcutByKey.set(data.ornekKey, d);
+      if (data?.baslik) mevcutByBaslik.set(data.baslik, d);
+    });
 
-    if (!ustuneYaz && mevcutOrnek.length >= ORNEK_ILANLAR.length) {
-      return {
-        eklendi: 0,
-        atlandi: true,
-        mevcut: mevcutOrnek.length,
-        mesaj: `${mevcutOrnek.length} örnek ilan zaten var. Eksikleri eklemek için tekrar yükleyin.`,
-      };
-    }
+    const ornekDocBul = (ornek) => {
+      if (ornek.ornekKey && mevcutByKey.has(ornek.ornekKey)) {
+        return mevcutByKey.get(ornek.ornekKey);
+      }
+      if (mevcutByBaslik.has(ornek.baslik)) {
+        return mevcutByBaslik.get(ornek.baslik);
+      }
+      for (const [eskiBaslik, key] of Object.entries(ORNEK_ESKI_BASLIKLAR)) {
+        if (key === ornek.ornekKey && mevcutByBaslik.has(eskiBaslik)) {
+          return mevcutByBaslik.get(eskiBaslik);
+        }
+      }
+      return null;
+    };
 
     const batch = writeBatch(db);
     let eklendi = 0;
+    let guncellendi = 0;
+    let fotoTamamlandi = 0;
+    const guncellenenRefler = new Set();
 
     for (const ornek of ORNEK_ILANLAR) {
-      if (!ustuneYaz && mevcutBasliklar.has(ornek.baslik)) continue;
-      const { detay, ...ust } = ornek;
+      const { detay, fotograflar: _atla, ...ust } = ornek;
+      const payload = {
+        ...ust,
+        detay: detay || {},
+        ornek: true,
+        fotograflar: [],
+      };
+      const mevcutDoc = ornekDocBul(ornek);
+
+      if (mevcutDoc) {
+        if (guncelle) {
+          batch.update(mevcutDoc.ref, payload);
+          guncellenenRefler.add(mevcutDoc.ref.path);
+          guncellendi += 1;
+        }
+        continue;
+      }
+
       const ref = doc(ilanCol());
       batch.set(ref, {
         ownerId: uid,
-        ornek: true,
-        ...ust,
-        detay: detay || {},
+        ...payload,
         createdAt: serverTimestamp(),
       });
       eklendi += 1;
     }
 
-    if (eklendi === 0) {
+    if (guncelle) {
+      const stokFoto = (url) =>
+        typeof url === 'string' &&
+        (url.includes('picsum.photos') ||
+          url.includes('pexels.com') ||
+          url.includes('unsplash.com') ||
+          url.includes('placehold.co'));
+
+      for (const docSnap of mevcutOrnek) {
+        if (guncellenenRefler.has(docSnap.ref.path)) continue;
+
+        const data = docSnap.data();
+        const fotolar = Array.isArray(data?.fotograflar) ? data.fotograflar : [];
+        const stokVar = fotolar.some(stokFoto);
+        if (!stokVar) continue;
+
+        batch.update(docSnap.ref, { fotograflar: [] });
+        fotoTamamlandi += 1;
+      }
+    }
+
+    if (eklendi === 0 && guncellendi === 0 && fotoTamamlandi === 0) {
       return {
         eklendi: 0,
+        guncellendi: 0,
         atlandi: true,
         mevcut: mevcutOrnek.length,
-        mesaj: 'Eklenecek yeni örnek ilan yok (hepsi zaten mevcut).',
+        mesaj: 'Güncellenecek veya eklenecek örnek ilan yok.',
       };
     }
 
     await batch.commit();
-    return { eklendi, atlandi: false, mesaj: `${eklendi} örnek ilan eklendi.` };
+
+    const parcalar = [];
+    if (guncellendi > 0) parcalar.push(`${guncellendi} ilan güncellendi`);
+    if (fotoTamamlandi > 0) parcalar.push(`${fotoTamamlandi} ilandan stok fotoğraflar temizlendi`);
+    if (eklendi > 0) parcalar.push(`${eklendi} yeni ilan eklendi`);
+    return {
+      eklendi,
+      guncellendi,
+      atlandi: false,
+      mesaj: parcalar.join(', ') + '. Vitrini yenileyin.',
+    };
   } catch (error) {
     throw new Error(firestoreHataMesaji(error));
   }

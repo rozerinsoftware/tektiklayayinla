@@ -12,10 +12,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing } from '../constants/theme';
 import { SIRALAMA_SECENEKLERI } from '../utils/ilanYardimci';
 
-const DURUM_SECENEKLERI = ['Sıfır', 'Sıfır Ayarında', 'İyi', 'Orta', 'Yıpranmış'];
-const KIMDEN_SECENEKLERI = ['Sahibinden', 'Mağazadan'];
+const DURUM_IKINCI_EL = ['Sıfır', 'Sıfır Ayarında', 'İyi', 'Orta', 'Yıpranmış'];
+const KIMDEN_IKINCI_EL = ['Sahibinden', 'Mağazadan'];
+const DURUM_IS_MAKINESI = ['Sıfır', '2. El', 'Yenilenmiş'];
+const KIMDEN_IS_MAKINESI = ['Sahibinden', 'Galeriden', 'Yetkili Bayiden'];
 
-export function IlanFiltreModal({ visible, onClose, filtre, onUygula, ikinciElModu }) {
+export function IlanFiltreModal({ visible, onClose, filtre, onUygula, ikinciElModu, isMakineleriModu }) {
   const [yerel, setYerel] = useState(filtre || {});
 
   React.useEffect(() => {
@@ -49,11 +51,11 @@ export function IlanFiltreModal({ visible, onClose, filtre, onUygula, ikinciElMo
               value={String(yerel.maxFiyat ?? '')}
               onChangeText={(t) => guncelle('maxFiyat', t.replace(/\D/g, ''))}
             />
-            {ikinciElModu ? (
+            {ikinciElModu || isMakineleriModu ? (
               <>
                 <Text style={styles.etiket}>Durum</Text>
                 <View style={styles.secenekWrap}>
-                  {DURUM_SECENEKLERI.map((d) => (
+                  {(isMakineleriModu ? DURUM_IS_MAKINESI : DURUM_IKINCI_EL).map((d) => (
                     <SecenekChip
                       key={d}
                       label={d}
@@ -64,7 +66,7 @@ export function IlanFiltreModal({ visible, onClose, filtre, onUygula, ikinciElMo
                 </View>
                 <Text style={styles.etiket}>Kimden</Text>
                 <View style={styles.secenekWrap}>
-                  {KIMDEN_SECENEKLERI.map((d) => (
+                  {(isMakineleriModu ? KIMDEN_IS_MAKINESI : KIMDEN_IKINCI_EL).map((d) => (
                     <SecenekChip
                       key={d}
                       label={d}

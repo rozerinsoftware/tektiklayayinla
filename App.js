@@ -30,7 +30,11 @@ import IkinciElIlanBilgileriScreen from './screens/ilan/IkinciElIlanBilgileriScr
 import IkinciElTeslimatScreen from './screens/ilan/IkinciElTeslimatScreen';
 import IkinciElFiyatScreen from './screens/ilan/IkinciElFiyatScreen';
 import IsMakineleriTemelBilgiScreen from './screens/ilan/IsMakineleriTemelBilgiScreen';
+import HizmetIlanScreen from './screens/ilan/HizmetIlanScreen';
 import IlanYonetimScreen from './screens/profil/IlanYonetimScreen';
+import IlanFiyatGuncelleScreen from './screens/profil/IlanFiyatGuncelleScreen';
+import IlanDuzenleScreen from './screens/profil/IlanDuzenleScreen';
+import HesapSilScreen from './screens/profil/HesapSilScreen';
 import IlanYayindanKaldirScreen from './screens/profil/IlanYayindanKaldirScreen';
 import PlatformSecScreen from './screens/PlatformSecScreen';
 import YayinlaScreen from './screens/YayinlaScreen';
@@ -77,7 +81,10 @@ function ProfilFlow() {
       {profilAltEkran('YayindaIlanlar', 'İlanlarım', KullaniciIlanlarScreen)}
       {profilAltEkran('YayindaOlmayanIlanlar', 'Yayında Olmayanlar', KullaniciIlanlarScreen)}
       {profilAltEkran('IlanYonetim', 'İlan Yönetimi', IlanYonetimScreen)}
+      {profilAltEkran('IlanFiyatGuncelle', 'Fiyat Güncelle', IlanFiyatGuncelleScreen)}
+      {profilAltEkran('IlanDuzenle', 'İlanı Düzenle', IlanDuzenleScreen)}
       {profilAltEkran('IlanYayindanKaldir', 'Yayından Kaldır', IlanYayindanKaldirScreen)}
+      {profilAltEkran('HesapSil', 'Hesap İptali', HesapSilScreen)}
       {profilAltEkran('FavoriIlanlar', 'Favori İlanlarım', FavoriListeScreen)}
       {profilAltEkran('FavoriAramalar', 'Favori Aramalarım', FavoriListeScreen)}
       {profilAltEkran('FavoriSaticilar', 'Favori Satıcılarım', FavoriListeScreen)}
@@ -183,6 +190,7 @@ function IlanFlow() {
         component={IsMakineleriTemelBilgiScreen}
         options={{ title: 'Temel Bilgiler' }}
       />
+      <IlanStack.Screen name="HizmetIlan" component={HizmetIlanScreen} options={{ title: 'Hizmet İlanı' }} />
       <IlanStack.Screen
         name="IlanKonumIsaretle"
         component={IlanKonumIsaretleScreen}

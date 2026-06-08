@@ -43,3 +43,8 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# local export / test artifacts
+.expo-export-test/
+.expo-export-test2/
+firebase-cli-test.txt

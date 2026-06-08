@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 import Constants from 'expo-constants';
 
 function getFirebaseConfig() {
@@ -27,4 +28,12 @@ export function getFirebaseApp() {
 
 export function getDb() {
   return getFirestore(getFirebaseApp());
+}
+
+let storageInstance = null;
+
+export function getStorageInstance() {
+  if (storageInstance) return storageInstance;
+  storageInstance = getStorage(getFirebaseApp());
+  return storageInstance;
 }

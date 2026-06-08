@@ -8,7 +8,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash-with-text.png",
       "resizeMode": "contain",
       "backgroundColor": "#2563EB"
     },
@@ -27,7 +27,9 @@
       "package": "com.rozerinbeyazit.tektiklayayinla",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE"
       ],
       "intentFilters": [
         {
@@ -56,6 +58,12 @@
           "locationWhenInUsePermission": "İlan konumunu işaretlemek için konum izni gerekir."
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "İlan fotoğrafı eklemek için galeri erişimi gerekir."
+        }
+      ],
       "./plugins/withAndroidMapQueries.js"
     ],
     "web": {
@@ -67,7 +75,9 @@
       "firebaseProjectId": "tektiklayayinla",
       "firebaseStorageBucket": "tektiklayayinla.firebasestorage.app",
       "firebaseMessagingSenderId": "578938999881",
-      "firebaseAppId": "1:578938999881:web:7feec6c1ada31ed2591b98"
+      "firebaseAppId": "1:578938999881:web:7feec6c1ada31ed2591b98",
+      "cloudinaryCloudName": "dxpx3e8m3",
+      "cloudinaryUploadPreset": "ilanlar"
     }
   }
 }

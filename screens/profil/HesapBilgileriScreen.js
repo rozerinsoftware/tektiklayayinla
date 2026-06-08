@@ -16,14 +16,8 @@ export default function HesapBilgileriScreen({ navigation }) {
         <ProfilMenuRow
           icon="close-circle-outline"
           baslik="Hesap iptali"
-          alt="Hesabınızı kapatma talebi"
-          onPress={() =>
-            Alert.alert(
-              'Hesap iptali',
-              'Hesap silme işlemi için destek@tektiklayayinla.com adresine yazabilirsiniz. Bu sürümde otomatik iptal henüz yoktur.',
-              [{ text: 'Tamam' }]
-            )
-          }
+          alt="Hesabınızı kalıcı olarak silin"
+          onPress={() => navigation.navigate('HesapSil')}
           son
         />
       </ProfilMenuSection>

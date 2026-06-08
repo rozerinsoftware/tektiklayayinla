@@ -105,6 +105,7 @@ export default function ProfilScreen({ navigation }) {
           await signOutUser();
           setKullanici(null);
           setAdmin(false);
+          rootNav().navigate('Giris');
         },
       },
     ]);

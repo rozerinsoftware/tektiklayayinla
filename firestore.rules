@@ -59,6 +59,17 @@ service cloud.firestore {
         && request.auth.uid in get(/databases/$(database)/documents/konusmalar/$(konusmaId)).data.katilimcilar;
     }
 
+    /** Gösterim / mesaj / favori sayacı — yalnızca +1, diğer alanlar değişmez */
+    function ilanIstatistikArtisi(alan) {
+      return isSignedIn()
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.baslik == resource.data.baslik
+        && request.resource.data.aciklama == resource.data.aciklama
+        && request.resource.data.fiyat == resource.data.fiyat
+        && request.resource.data.get(alan, 0) == resource.data.get(alan, 0) + 1
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([alan, 'updatedAt']);
+    }
+
     match /users/{userId} {
       allow read: if yazmaIzni() || isAdmin() || (isSignedIn() && request.auth.uid == userId);
 
@@ -82,13 +93,17 @@ service cloud.firestore {
         && ilanTemelAlanlarTamam()
         && ilanKonumSartlari();
 
-      allow update: if yazmaIzni()
+      allow update: if (
+        yazmaIzni()
         && request.resource.data.ownerId == resource.data.ownerId
         && ilanKonumSartlari()
         && (
           resource.data.ownerId == request.auth.uid
           || isAdmin()
-        );
+        )
+      ) || ilanIstatistikArtisi('goruntulenme')
+        || ilanIstatistikArtisi('mesajSayisi')
+        || ilanIstatistikArtisi('favoriSayisi');
 
       allow delete: if yazmaIzni()
         && (resource.data.ownerId == request.auth.uid || isAdmin());

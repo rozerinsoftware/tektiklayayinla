@@ -26,8 +26,8 @@ export default function EmailBilgiScreen() {
     <ScrollView style={styles.wrap} contentContainerStyle={styles.content}>
       <View style={styles.kart}>
         <Text style={styles.aciklama}>
-          E-posta adresiniz giriş ve önemli bildirimler için kullanılır. Değiştirmek için
-          yeni sürümde e-posta doğrulama akışı eklenecek.
+          E-posta adresiniz giriş ve hesap güvenliği için kullanılır. Kayıt sırasında onay
+          maili gönderilir; onaylamadan ilan veremezsiniz.
         </Text>
         <Text style={styles.etiket}>E-posta adresim:</Text>
         <Text style={styles.email}>{email}</Text>

@@ -21,18 +21,20 @@ export function useIlanSayimlari() {
   }, []);
 
   const say = useCallback(
-    (kategoriId) => {
-      if (!kategoriId) return ilanlar.length;
-      return ilanlar.filter((i) => ilanKategoriEslesir(i, kategoriId)).length;
+    (kategoriId, filtreYolu = null) => {
+      if (!kategoriId && !filtreYolu?.length) return ilanlar.length;
+      const id = filtreYolu?.length ? filtreYolu[filtreYolu.length - 1] : kategoriId;
+      return ilanlar.filter((i) => ilanKategoriEslesir(i, id, filtreYolu)).length;
     },
     [ilanlar]
   );
 
   const cocukSayimlari = useCallback(
-    (cocuklar = []) => {
+    (cocuklar = [], ustYolIds = []) => {
       const map = {};
       cocuklar.forEach((c) => {
-        map[c.id] = say(c.id);
+        const yol = [...ustYolIds, c.id];
+        map[c.id] = say(c.id, yol);
       });
       return map;
     },

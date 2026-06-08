@@ -12,8 +12,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { adminDeleteIlan, adminGetAllIlanlar, adminGetAllUsers, adminOrnekIlanlariYukle } from '../api';
+import { ORNEK_ILANLAR } from '../constants/ornekIlanlar';
 import IlanKart from '../components/IlanKart';
 import { colors, radius, shadow, spacing } from '../constants/theme';
+
+const ORNEK_ILAN_SAYISI = ORNEK_ILANLAR.length;
 
 export default function AdminPanelScreen({ navigation }) {
   const [ilanlar, setIlanlar] = useState([]);
@@ -45,23 +48,36 @@ export default function AdminPanelScreen({ navigation }) {
     }, [])
   );
 
-  const ornekIlanlariYukle = () => {
+  const ornekIlanlariYukle = (sadeceEksik = false) => {
     Alert.alert(
-      'Örnek ilanları yükle',
-      'Vitrin ve kategoriler için 10 demo ilan eklenir. Zaten varsa atlanır. Admin panelinden düzenleyebilirsiniz.',
+      sadeceEksik ? 'Eksik ilanları ekle' : 'Örnek ilanları yükle / güncelle',
+      sadeceEksik
+        ? 'Listede olmayan yeni örnek ilanlar eklenir (mevcut ilanlara dokunulmaz).'
+        : `${ORNEK_ILAN_SAYISI} demo ilan yüklenir / güncellenir. Örnek ilanlarda stok fotoğraf yok — vitrinde kategori emojisi gösterilir.`,
       [
         { text: 'İptal', style: 'cancel' },
         {
-          text: 'Yükle',
+          text: sadeceEksik ? 'Ekle' : 'Yükle',
           onPress: async () => {
             try {
+              setOrnekYukleniyor(true);
               setYukleniyor(true);
-              const sonuc = await adminOrnekIlanlariYukle();
+              const sonuc = await adminOrnekIlanlariYukle({
+                ustuneYaz: sadeceEksik,
+                guncelle: !sadeceEksik,
+              });
+              setOrnekDurum({
+                type: sonuc.atlandi ? 'info' : 'ok',
+                text: sonuc.mesaj,
+                yenidenGoster: sonuc.atlandi,
+              });
               Alert.alert('Tamam', sonuc.mesaj);
               await verileriYukle();
             } catch (error) {
+              setOrnekDurum({ type: 'err', text: error?.message || 'Yüklenemedi.' });
               Alert.alert('Hata', error?.message || 'Yüklenemedi.');
             } finally {
+              setOrnekYukleniyor(false);
               setYukleniyor(false);
             }
           },
@@ -141,7 +157,7 @@ export default function AdminPanelScreen({ navigation }) {
               <Ionicons name="cloud-download-outline" size={20} color={colors.primaryText} />
             )}
             <Text style={styles.ornekBtnText}>
-              {ornekYukleniyor ? 'Yükleniyor…' : 'Örnek ilanları yükle (vitrin demo)'}
+              {ornekYukleniyor ? 'Yükleniyor…' : `Örnek ilanları yükle / güncelle (${ORNEK_ILAN_SAYISI})`}
             </Text>
           </TouchableOpacity>
           {ornekDurum ? (
@@ -175,6 +191,7 @@ export default function AdminPanelScreen({ navigation }) {
             </View>
           ) : null}
           <FlatList
+            style={styles.ilanListe}
             data={ilanlar}
             keyExtractor={(item) => String(item.id)}
             contentContainerStyle={styles.listContent}
@@ -212,8 +229,9 @@ export default function AdminPanelScreen({ navigation }) {
             )}
           />
         </View>
-      ) : (
+        ) : (
         <FlatList
+          style={styles.ilanListe}
           data={kullanicilar}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.listContent}
@@ -276,6 +294,7 @@ const styles = StyleSheet.create({
   sekmeTextAktif: { color: colors.primary, fontWeight: '700' },
   listContent: { padding: spacing.md, paddingBottom: 24 },
   ilanlarWrap: { flex: 1 },
+  ilanListe: { flex: 1 },
   ornekBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -313,8 +332,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   ornekTekrarBtnText: { color: colors.primaryText, fontWeight: '700', fontSize: 12 },
-  ilanSatir: { marginBottom: spacing.lg },
-  ilanKartWrap: { marginBottom: spacing.sm },
+  ilanSatir: { marginBottom: spacing.lg, width: '100%' },
+  ilanKartWrap: { marginBottom: spacing.sm, width: '100%' },
   ownerMeta: { fontSize: 11, color: colors.textMuted, marginTop: 4, paddingHorizontal: 4 },
   aksiyonSatir: { flexDirection: 'row', gap: spacing.sm },
   duzenleButon: {

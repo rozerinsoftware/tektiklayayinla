@@ -10,8 +10,8 @@ export default function BildirimlerScreen() {
         <Ionicons name="notifications-outline" size={48} color={colors.textMuted} />
         <Text style={styles.bosBaslik}>Bildirim yok</Text>
         <Text style={styles.bosMetin}>
-          İlanlarınız, mesajlarınız ve kampanyalar burada görünecek. Push bildirimleri yakında
-          eklenecek.
+          İlanlarınız, mesajlarınız ve sistem bildirimleri burada listelenecek. Şu an yeni
+          bildiriminiz yok.
         </Text>
       </View>
     </ScrollView>

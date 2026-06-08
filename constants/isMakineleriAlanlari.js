@@ -1,4 +1,4 @@
-import { getKategoriById } from './kategoriler';
+import { getKategoriById, getKategoriByYol } from './kategoriler';
 import {
   getIsMakinesiTipBaslik,
   getIsMakinesiMarkaBaslik,
@@ -34,7 +34,9 @@ const YEDEK_PARCA = [
 ];
 
 export function getIsMakinesiProfil(secilenKategori) {
-  const bilgi = getKategoriById(secilenKategori?.kategoriId);
+  const bilgi =
+    (secilenKategori?.kategoriYolu?.length && getKategoriByYol(secilenKategori.kategoriYolu)) ||
+    getKategoriById(secilenKategori?.kategoriId);
   const yolBaslik = bilgi?.yolBaslik || secilenKategori?.kategoriEtiket?.split(' › ') || [];
   const yolIds = bilgi?.yolIds || secilenKategori?.kategoriYolu || [];
   const kategoriId = secilenKategori?.kategoriId;

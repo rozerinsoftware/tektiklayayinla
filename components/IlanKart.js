@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow, getKategoriMeta, formatFiyat } from '../constants/theme';
 import { kokIdToMetaKey } from '../constants/kategoriler';
 import { formatKonumEtiket } from '../utils/konum';
+import { gecerliKapakFoto } from '../utils/ilanFoto';
 
 export default function IlanKart({ ilan, onPress, onSil, compact }) {
   const metaKey = ilan.kategoriKok
@@ -17,6 +18,7 @@ export default function IlanKart({ ilan, onPress, onSil, compact }) {
     : ilan.platformlar
       ? [ilan.platformlar]
       : [];
+  const kapakFoto = gecerliKapakFoto(ilan.fotograflar);
 
   return (
     <TouchableOpacity
@@ -25,7 +27,11 @@ export default function IlanKart({ ilan, onPress, onSil, compact }) {
       activeOpacity={0.85}
     >
       <View style={[styles.gorselAlan, { backgroundColor: meta.bg }]}>
-        <Text style={styles.gorselEmoji}>{meta.emoji}</Text>
+        {kapakFoto ? (
+          <Image source={{ uri: kapakFoto }} style={styles.kapakFoto} />
+        ) : (
+          <Text style={styles.gorselEmoji}>{meta.emoji}</Text>
+        )}
         {kategoriLabel ? (
           <View style={[styles.kategoriEtiket, { backgroundColor: meta.renk }]}>
             <Text style={styles.kategoriEtiketText} numberOfLines={1}>
@@ -90,6 +96,7 @@ export default function IlanKart({ ilan, onPress, onSil, compact }) {
 const styles = StyleSheet.create({
   kart: {
     flexDirection: 'row',
+    width: '100%',
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     marginBottom: 12,
@@ -101,12 +108,13 @@ const styles = StyleSheet.create({
   kartCompact: { marginBottom: 10 },
   gorselAlan: {
     width: 110,
-    minHeight: 120,
+    height: 120,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 8,
+    overflow: 'hidden',
   },
   gorselEmoji: { fontSize: 40 },
+  kapakFoto: { width: 110, height: 120 },
   kategoriEtiket: {
     position: 'absolute',
     bottom: 36,

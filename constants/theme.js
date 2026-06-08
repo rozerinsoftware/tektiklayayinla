@@ -62,7 +62,7 @@ export const stackScreenOptions = {
   headerTintColor: colors.primaryText,
   headerTitleStyle: { fontWeight: '700', fontSize: 17, color: colors.primaryText },
   headerShadowVisible: false,
-  contentStyle: { backgroundColor: colors.background },
+  contentStyle: { flex: 1, backgroundColor: colors.background },
 };
 
 export const KATEGORI_META = {

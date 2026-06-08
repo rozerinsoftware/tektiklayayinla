@@ -1,4 +1,4 @@
-import { getKategoriById } from './kategoriler';
+import { getKategoriById, getKategoriByYol } from './kategoriler';
 
 const ISITMA = [
   'Yok',
@@ -129,8 +129,8 @@ const MUSTAKIL_TIPLER = new Set(['mustakil-ev', 'villa', 'ciftlik-evi', 'kosk-ko
 
 export function emlakProfilKey(kategoriId, yolIds = []) {
   const id = String(kategoriId || '').replace(/^kiralik-/, '');
-  if (kategoriId === 'arsa') return 'arsa';
-  if (kategoriId === 'is-yeri') return 'is-yeri';
+  if (kategoriId?.startsWith('arsa-') || yolIds.includes('arsa')) return 'arsa';
+  if (kategoriId?.startsWith('is-yeri-') || yolIds.includes('is-yeri')) return 'is-yeri';
   if (kategoriId === 'bina') return 'bina';
   if (kategoriId === 'devre-mulk') return 'devre-mulk';
   if (kategoriId === 'turistik-tesis') return 'turistik-tesis';
@@ -143,7 +143,9 @@ export function emlakProfilKey(kategoriId, yolIds = []) {
 }
 
 export function getEmlakProfil(secilenKategori) {
-  const bilgi = getKategoriById(secilenKategori?.kategoriId);
+  const bilgi =
+    (secilenKategori?.kategoriYolu?.length && getKategoriByYol(secilenKategori.kategoriYolu)) ||
+    getKategoriById(secilenKategori?.kategoriId);
   const yolBaslik = bilgi?.yolBaslik || secilenKategori?.kategoriEtiket?.split(' › ') || [];
   const yolIds = bilgi?.yolIds || secilenKategori?.kategoriYolu || [];
   const emlakTipi = yolBaslik[yolBaslik.length - 1] || 'Emlak';

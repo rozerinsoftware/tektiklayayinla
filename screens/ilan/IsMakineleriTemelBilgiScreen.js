@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppInput, PrimaryButton } from '../../components/ui';
 import IlanBreadcrumb from '../../components/ilan/IlanBreadcrumb';
 import IlanAlanSatiri from '../../components/ilan/IlanAlanSatiri';
+import IlanFotografSec from '../../components/ilan/IlanFotografSec';
 import { colors, spacing, radius, shadow } from '../../constants/theme';
 import { kokIdToMetaKey } from '../../constants/kategoriler';
 import {
@@ -41,6 +42,7 @@ export default function IsMakineleriTemelBilgiScreen({ navigation, route }) {
     return baslangic;
   });
   const [hatalar, setHatalar] = useState({});
+  const [fotograflar, setFotograflar] = useState([]);
 
   const fiyatGuncelle = (text) => {
     if (/[a-zA-ZğüşıöçĞÜŞİÖÇ]/.test(text)) {
@@ -104,6 +106,7 @@ export default function IsMakineleriTemelBilgiScreen({ navigation, route }) {
         kategoriYolu: secilenKategori.kategoriYolu,
         kategoriEtiket: secilenKategori.kategoriEtiket,
         kategoriKok: 'is-makineleri',
+        fotograflar,
         ...detay,
       },
       adim: 2,
@@ -116,6 +119,8 @@ export default function IsMakineleriTemelBilgiScreen({ navigation, route }) {
       <IlanBreadcrumb parcalar={breadcrumb} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.ekranBaslik}>Temel Bilgileri Giriniz</Text>
+
+        <IlanFotografSec fotograflar={fotograflar} onChange={setFotograflar} />
 
         <View style={styles.tipKart}>
           <View style={styles.tipIcon}>

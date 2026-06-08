@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useLayoutEffect } from 'react';
+import React, { useMemo, useCallback, useLayoutEffect, useEffect } from 'react';
 import {
   View,
   Text,
@@ -106,13 +106,20 @@ export default function VasitaSecimScreen({ navigation, route }) {
     });
   };
 
+  useEffect(() => {
+    if (!vasitaKatalogVarMi(aracTipId)) {
+      navigation.replace('VasitaTemelBilgi', {
+        secilenKategori,
+        secimler: {},
+        manuelArac: true,
+      });
+    }
+  }, [aracTipId, navigation, secilenKategori]);
+
   if (!vasitaKatalogVarMi(aracTipId)) {
-    Alert.alert('Bilgi', 'Bu araç tipi için seçim listesi henüz hazır değil.', [
-      { text: 'Tamam', onPress: () => navigation.goBack() },
-    ]);
     return (
       <View style={styles.merkez}>
-        <Text style={styles.hata}>Katalog bulunamadı</Text>
+        <Text style={styles.hata}>Yönlendiriliyor…</Text>
       </View>
     );
   }

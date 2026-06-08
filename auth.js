@@ -8,7 +8,9 @@ import {
   reauthenticateWithCredential,
   signInWithEmailAndPassword,
   sendEmailVerification,
+  sendPasswordResetEmail,
   signOut,
+  deleteUser,
   updatePassword,
   updateProfile,
 } from 'firebase/auth';
@@ -223,4 +225,19 @@ export async function changePassword(mevcutSifre, yeniSifre) {
   const cred = EmailAuthProvider.credential(user.email, mevcutSifre);
   await reauthenticateWithCredential(user, cred);
   await updatePassword(user, yeniSifre);
+}
+
+export async function resetPassword(email) {
+  const eposta = String(email || '').trim();
+  if (!eposta) throw new Error('E-posta adresi girin.');
+  await sendPasswordResetEmail(getFirebaseAuth(), eposta);
+}
+
+export async function deleteAccount(mevcutSifre) {
+  const auth = getFirebaseAuth();
+  const user = auth.currentUser;
+  if (!user?.email) throw new Error('Hesap silmek için giriş yapmalısınız.');
+  const cred = EmailAuthProvider.credential(user.email, mevcutSifre);
+  await reauthenticateWithCredential(user, cred);
+  await deleteUser(user);
 }

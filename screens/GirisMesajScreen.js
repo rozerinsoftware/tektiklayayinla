@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { signIn, resendVerificationEmail } from '../auth';
+import { signIn, resendVerificationEmail, resetPassword } from '../auth';
 import { ensureUserProfile } from '../api';
 import { colors, radius, spacing } from '../constants/theme';
 
@@ -131,7 +131,19 @@ export default function GirisMesajScreen({ navigation, route }) {
 
           <TouchableOpacity
             style={styles.sifremiUnuttum}
-            onPress={() => Alert.alert('Yakında', 'Şifre sıfırlama yakında eklenecek.')}
+            onPress={async () => {
+              const eposta = email.trim();
+              if (!eposta) {
+                Alert.alert('E-posta', 'Önce e-posta adresinizi yazın.');
+                return;
+              }
+              try {
+                await resetPassword(eposta);
+                Alert.alert('E-posta gönderildi', 'Şifre sıfırlama bağlantısı e-postanıza gönderildi.');
+              } catch (e) {
+                Alert.alert('Hata', e?.message || 'E-posta gönderilemedi.');
+              }
+            }}
           >
             <Text style={styles.sifremiUnuttumText}>Şifremi unuttum</Text>
           </TouchableOpacity>

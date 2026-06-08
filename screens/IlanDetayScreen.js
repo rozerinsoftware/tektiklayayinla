@@ -6,10 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { deleteIlan, getUserPublicProfile } from '../api';
+import { deleteIlan, getUserPublicProfile, incrementIlanStat } from '../api';
 import { getOrCreateKonusma } from '../api/mesajlar';
 import { getCurrentUserId } from '../auth';
 import { girisIste } from '../utils/requireAuth';
@@ -83,7 +85,10 @@ export default function IlanDetayScreen({ navigation, route }) {
   useFocusEffect(
     useCallback(() => {
       favoriDurumunuYukle();
-    }, [favoriDurumunuYukle])
+      if (ilan.id && !sahibi) {
+        incrementIlanStat(ilan.id, 'goruntulenme');
+      }
+    }, [favoriDurumunuYukle, ilan.id, sahibi])
   );
 
   const mesajAt = useCallback(async () => {
@@ -114,6 +119,9 @@ export default function IlanDetayScreen({ navigation, route }) {
     if (!ilan.id) return;
     const eklendi = await toggleFavoriIlan(ilan);
     setFavori(eklendi);
+    if (eklendi && ilan.id) {
+      incrementIlanStat(ilan.id, 'favoriSayisi');
+    }
   }, [navigation, ilan]);
 
   useLayoutEffect(() => {
@@ -163,16 +171,27 @@ export default function IlanDetayScreen({ navigation, route }) {
     ]);
   };
 
+  const fotograflar = Array.isArray(ilan.fotograflar) ? ilan.fotograflar.filter(Boolean) : [];
+  const ekranGen = Dimensions.get('window').width;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={[styles.hero, { backgroundColor: meta.bg }]}>
-        <Text style={styles.heroEmoji}>{meta.emoji}</Text>
-        {ilan.kategori ? (
-          <View style={[styles.kategoriBadge, { backgroundColor: meta.renk }]}>
-            <Text style={styles.kategoriBadgeText}>{ilan.kategori}</Text>
-          </View>
-        ) : null}
-      </View>
+      {fotograflar.length > 0 ? (
+        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+          {fotograflar.map((uri, i) => (
+            <Image key={uri + i} source={{ uri }} style={[styles.heroFoto, { width: ekranGen }]} />
+          ))}
+        </ScrollView>
+      ) : (
+        <View style={[styles.hero, { backgroundColor: meta.bg }]}>
+          <Text style={styles.heroEmoji}>{meta.emoji}</Text>
+          {ilan.kategori ? (
+            <View style={[styles.kategoriBadge, { backgroundColor: meta.renk }]}>
+              <Text style={styles.kategoriBadgeText}>{ilan.kategori}</Text>
+            </View>
+          ) : null}
+        </View>
+      )}
 
       <View style={styles.kart}>
         <Text style={styles.fiyat}>{formatFiyat(ilan.fiyat)}</Text>
@@ -254,6 +273,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { paddingBottom: 32 },
   headerFavori: { marginRight: 8 },
+  heroFoto: { height: 220, resizeMode: 'cover' },
   hero: {
     height: 180,
     alignItems: 'center',

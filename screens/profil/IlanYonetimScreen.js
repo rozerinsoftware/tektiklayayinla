@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -10,14 +11,23 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { deleteIlan, unpublishIlan } from '../../api';
+import { deleteIlan, getIlanById } from '../../api';
 import { formatFiyat } from '../../constants/theme';
 import { ilanBitisTarihi, formatIlanTarih, ilanYayinda } from '../../utils/ilanYardimci';
 import { colors, spacing, radius } from '../../constants/theme';
 
 export default function IlanYonetimScreen({ navigation, route }) {
-  const ilan = route.params?.ilan;
+  const [ilan, setIlan] = useState(route.params?.ilan);
   const [yukleniyor, setYukleniyor] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!route.params?.ilan?.id) return;
+      getIlanById(route.params.ilan.id).then((g) => {
+        if (g) setIlan(g);
+      });
+    }, [route.params?.ilan?.id])
+  );
 
   if (!ilan) {
     return (
@@ -37,7 +47,7 @@ export default function IlanYonetimScreen({ navigation, route }) {
     const handler = (index) => {
       if (yayinda) {
         if (index === 0) navigation.navigate('IlanYayindanKaldir', { ilan });
-        if (index === 1) Alert.alert('Yakında', 'Fiyat güncelleme yakında eklenecek.');
+        if (index === 1) navigation.navigate('IlanFiyatGuncelle', { ilan });
         if (index === 2) ilanSil();
       } else {
         if (index === 0) tekrarYayinla();
@@ -54,7 +64,8 @@ export default function IlanYonetimScreen({ navigation, route }) {
         ...(yayinda
           ? [
               { text: 'Yayından Kaldır', onPress: () => navigation.navigate('IlanYayindanKaldir', { ilan }) },
-              { text: 'Fiyatı Güncelle', onPress: () => Alert.alert('Yakında', 'Fiyat güncelleme yakında.') },
+              { text: 'Fiyatı Güncelle', onPress: () => navigation.navigate('IlanFiyatGuncelle', { ilan }) },
+              { text: 'İlanı Düzenle', onPress: () => navigation.navigate('IlanDuzenle', { ilan }) },
             ]
           : [{ text: 'İlanı Yayınla', onPress: tekrarYayinla }]),
         { text: 'İlanı Sil', style: 'destructive', onPress: ilanSil },
@@ -106,10 +117,15 @@ export default function IlanYonetimScreen({ navigation, route }) {
       </TouchableOpacity>
 
       <View style={styles.istatistik}>
-        <IstatistikKutu label="Gösterim" deger="0" icon="eye-outline" />
-        <IstatistikKutu label="Mesaj" deger="0" icon="mail-outline" />
-        <IstatistikKutu label="Favori" deger="0" icon="star-outline" />
+        <IstatistikKutu label="Gösterim" deger={String(ilan.goruntulenme ?? 0)} icon="eye-outline" />
+        <IstatistikKutu label="Mesaj" deger={String(ilan.mesajSayisi ?? 0)} icon="mail-outline" />
+        <IstatistikKutu label="Favori" deger={String(ilan.favoriSayisi ?? 0)} icon="star-outline" />
       </View>
+
+      <TouchableOpacity style={styles.duzenleAltBtn} onPress={() => navigation.navigate('IlanDuzenle', { ilan })}>
+        <Ionicons name="create-outline" size={18} color={colors.primary} />
+        <Text style={styles.duzenleAltText}>Başlık ve açıklamayı düzenle</Text>
+      </TouchableOpacity>
 
       <View style={styles.bildirimKutu}>
         <Ionicons name="notifications-outline" size={18} color={colors.textSecondary} />
@@ -225,4 +241,16 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   kaldirText: { color: colors.primaryText, fontWeight: '700' },
+  duzenleAltBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  duzenleAltText: { fontSize: 14, fontWeight: '600', color: colors.primary },
 });

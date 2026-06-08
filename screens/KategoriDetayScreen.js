@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   getKategoriById,
+  getKategoriByYol,
   getKokKategori,
 } from '../constants/kategoriler';
 import KategoriListe from '../components/KategoriListe';
@@ -15,8 +16,12 @@ import { isMakinesiFormYapragi } from '../constants/isMakineleriAlanlari';
 
 export default function KategoriDetayScreen({ navigation, route }) {
   const kategoriId = route.params?.kategoriId;
+  const ustYolIds = route.params?.ustYolIds || null;
   const secimModu = route.params?.secimModu === true;
-  const bilgi = getKategoriById(kategoriId);
+  const bilgi =
+    (Array.isArray(ustYolIds) && ustYolIds.length
+      ? getKategoriByYol([...ustYolIds, kategoriId])
+      : null) || getKategoriById(kategoriId);
   const { yukleniyor, yukle, say, cocukSayimlari } = useIlanSayimlari();
 
   useEffect(() => {
@@ -76,8 +81,11 @@ export default function KategoriDetayScreen({ navigation, route }) {
   const node = bilgi?.node;
   const cocuklar = node?.cocuklar || [];
   const ilgili = node?.ilgili || [];
-  const sayimlar = useMemo(() => cocukSayimlari([...cocuklar, ...ilgili]), [cocuklar, ilgili, cocukSayimlari]);
-  const tumSayi = say(kategoriId);
+  const sayimlar = useMemo(
+    () => cocukSayimlari([...cocuklar, ...ilgili], bilgi?.yolIds || []),
+    [cocuklar, ilgili, bilgi?.yolIds, cocukSayimlari]
+  );
+  const tumSayi = say(kategoriId, bilgi?.yolIds);
 
   if (!bilgi || !node) {
     return (
@@ -87,12 +95,16 @@ export default function KategoriDetayScreen({ navigation, route }) {
     );
   }
 
-  const ilanListesineGit = (filtreId, baslik) => {
+  const ilanListesineGit = (filtreId, baslik, filtreYolu) => {
     openIlanListesi(navigation, {
       kategoriId: filtreId,
+      kategoriYolu: filtreYolu,
       kategoriBaslik: baslik || bilgi.etiket,
     });
   };
+
+  const cocukYolu = (cocuk) => [...bilgi.yolIds, cocuk.id];
+  const cocukBilgi = (cocuk) => getKategoriByYol(cocukYolu(cocuk));
 
   const kategoriSecildi = (secimBilgi) => {
     const secim = secimBilgi || {
@@ -124,11 +136,25 @@ export default function KategoriDetayScreen({ navigation, route }) {
 
   const cocugaBas = (cocuk) => {
     if (cocuk.hizmet) {
-      Alert.alert('Bilgi', 'Bu kategori hizmet ilanları içindir. Yakında eklenecek.');
+      if (secimModu) {
+        const alt = cocukBilgi(cocuk);
+        if (alt) {
+          navigation.navigate('HizmetIlan', {
+            secilenKategori: {
+              kategoriId: cocuk.id,
+              kategoriYolu: alt.yolIds,
+              kategoriEtiket: alt.etiket,
+              kategoriKok: 'hizmet',
+            },
+          });
+        }
+      } else {
+        ilanListesineGit(cocuk.id, `${bilgi.node.baslik} › ${cocuk.baslik}`, cocukYolu(cocuk));
+      }
       return;
     }
     if (secimModu && (cocuk.yaprak || !cocuk.cocuklar?.length)) {
-      const alt = getKategoriById(cocuk.id);
+      const alt = cocukBilgi(cocuk);
       if (alt) {
         kategoriSecildi({
           kategoriId: cocuk.id,
@@ -140,12 +166,13 @@ export default function KategoriDetayScreen({ navigation, route }) {
       return;
     }
     if (cocuk.yaprak || !cocuk.cocuklar?.length) {
-      ilanListesineGit(cocuk.id, `${bilgi.node.baslik} › ${cocuk.baslik}`);
+      ilanListesineGit(cocuk.id, `${bilgi.node.baslik} › ${cocuk.baslik}`, cocukYolu(cocuk));
       return;
     }
     navigation.push('KategoriDetay', {
       kategoriId: cocuk.id,
       secimModu,
+      ustYolIds: bilgi.yolIds,
     });
   };
 

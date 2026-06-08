@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Image, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { addIlan, updateIlan } from '../api';
+import { publishIlan } from '../api';
 import { PrimaryButton, SectionTitle } from '../components/ui';
 import { colors, radius, shadow, spacing } from '../constants/theme';
 
@@ -42,18 +42,28 @@ export default function PlatformSecScreen({ navigation, route }) {
     try {
       setYayinlaniyor(true);
       const tamamlananIlan = { ...ilan, platformlar: secilenler };
-      if (duzenlemeId) {
-        await updateIlan(duzenlemeId, tamamlananIlan);
-        navigation.navigate('Yayinla', { ilan: { ...tamamlananIlan, id: duzenlemeId }, guncelleme: true });
-      } else {
-        const kayit = await addIlan(tamamlananIlan);
-        navigation.navigate('Yayinla', { ilan: kayit });
-      }
+      const kayit = await publishIlan(tamamlananIlan, secilenler, { duzenlemeId });
+      navigation.navigate('Yayinla', {
+        ilan: { ...kayit, id: kayit.id || duzenlemeId, platformlar: secilenler },
+        guncelleme: !!duzenlemeId,
+      });
     } catch (error) {
+      if (error?.kismiBasari && error?.ilanId) {
+        navigation.navigate('Yayinla', {
+          ilan: {
+            ...(error.kayit || ilan),
+            id: error.ilanId,
+            platformlar: secilenler,
+          },
+          guncelleme: !!duzenlemeId,
+          fotoUyari: error.message,
+        });
+        return;
+      }
       const message =
         error?.response?.data?.message ||
         error?.message ||
-        'İlan kaydedilemedi. İnternet bağlantınızı kontrol edin.';
+        'İlan kaydedilemedi. İnternet bağlantınızı ve e-posta onayınızı kontrol edin.';
       Alert.alert('Yayınlama Hatası', message);
     } finally {
       setYayinlaniyor(false);

@@ -1,6 +1,7 @@
 /**
- * Vitrin / kategori testi için örnek ilanlar.
+ * Vitrin / kategori testi için örnek ilanlar (Sahibinden tarzı demo).
  * Admin panelinden yüklenir; ornek: true ile işaretlenir.
+ * Demo ilanlarda fotoğraf yok — vitrinde kategori emojisi gösterilir.
  */
 
 const ORNEK_KONUM = {
@@ -11,10 +12,21 @@ const ORNEK_KONUM = {
   etiket: 'Kadıköy, İstanbul',
 };
 
+
+/** Eski başlıklar → ornekKey (Firestore'daki kayıtları eşleştirmek için) */
+export const ORNEK_ESKI_BASLIKLAR = {
+  '2019 John Deere Traktör': 'ornek-traktor-john-deere',
+  '2020 Toyota Corolla 1.6 Vision': 'ornek-vasita-corolla',
+  'iPhone 14 Pro Max 256 GB': 'ornek-ikinci-el-iphone',
+  'Satılık Arsa — Çankaya': 'ornek-emlak-arsa-cankaya',
+};
+
 export const ORNEK_ILANLAR = [
   {
+    ornekKey: 'ornek-emlak-daire-kadikoy',
     baslik: 'Satılık 3+1 Daire — Kadıköy',
-    aciklama: 'Metroya yakın, aydınlık, masrafsız daire. Örnek vitrin ilanıdır.',
+    aciklama:
+      'Moda\'ya yürüme mesafesinde, güney cephe, doğalgazlı kombi. Site içi otopark ve güvenlik mevcut. Tapu müsait, krediye uygun.',
     fiyat: '4500000',
     kategori: 'Emlak',
     kategoriId: 'daire',
@@ -26,8 +38,10 @@ export const ORNEK_ILANLAR = [
     detay: { emlakTipi: 'Daire', ilanTuru: 'Satılık', metrekare: '120', odaSayisi: '3+1', binaYasi: '8' },
   },
   {
+    ornekKey: 'ornek-emlak-rezidans-besiktas',
     baslik: 'Satılık Rezidans — Beşiktaş',
-    aciklama: 'Güvenlikli site, havuz ve spor salonu. Örnek ilan.',
+    aciklama:
+      '7/24 güvenlik, kapalı otopark, fitness ve havuz. Boğaz manzaralı salon, ankastre mutfak, yerden ısıtma.',
     fiyat: '12500000',
     kategori: 'Emlak',
     kategoriId: 'rezidans',
@@ -39,8 +53,10 @@ export const ORNEK_ILANLAR = [
     detay: { emlakTipi: 'Rezidans', ilanTuru: 'Satılık', metrekare: '185', odaSayisi: '4+1' },
   },
   {
+    ornekKey: 'ornek-emlak-kiralik-uskudar',
     baslik: 'Kiralık 2+1 Daire — Üsküdar',
-    aciklama: 'Eşyalı, aidat dahil değil. Örnek kiralık ilan.',
+    aciklama:
+      'Metrobus durağına 3 dk, eşyalı, balkonlu. Aidat 1.200 TL, depozito 2 kira. Hemen taşınmaya uygun.',
     fiyat: '28000',
     kategori: 'Emlak',
     kategoriId: 'kiralik-daire',
@@ -49,11 +65,13 @@ export const ORNEK_ILANLAR = [
     kategoriEtiket: 'Emlak › Konut › Kiralık › Daire',
     platformlar: ['Sahibinden'],
     konum: { ...ORNEK_KONUM, ilce: 'Üsküdar', etiket: 'Üsküdar, İstanbul' },
-    detay: { emlakTipi: 'Daire', ilanTuru: 'Kiralık', metrekare: '95', odaSayisi: '2+1' },
+    detay: { emlakTipi: 'Daire', ilanTuru: 'Kiralık', metrekare: '95', odaSayisi: '2+1', esyali: 'Evet' },
   },
   {
+    ornekKey: 'ornek-emlak-villa-bodrum',
     baslik: 'Satılık Villa — Bodrum',
-    aciklama: 'Deniz manzaralı müstakil villa. Örnek ilan.',
+    aciklama:
+      'Özel havuzlu, 4 oda 3 banyo, deniz manzaralı bahçe. Yaz-kış yaşamaya uygun, jeneratör ve güneş paneli mevcut.',
     fiyat: '28500000',
     kategori: 'Emlak',
     kategoriId: 'villa',
@@ -65,8 +83,10 @@ export const ORNEK_ILANLAR = [
     detay: { emlakTipi: 'Villa', ilanTuru: 'Satılık', metrekare: '320', odaSayisi: '5+2' },
   },
   {
+    ornekKey: 'ornek-emlak-arsa-cankaya',
     baslik: 'Satılık Arsa — Çankaya',
-    aciklama: 'İmarlı konut arsası. Örnek arsa ilanı.',
+    aciklama:
+      'İmar durumu konut, yola cepheli 450 m² parsel. Altyapı hazır, inşaata uygun. Yatırım için ideal.',
     fiyat: '8500000',
     kategori: 'Emlak',
     kategoriId: 'arsa',
@@ -78,8 +98,24 @@ export const ORNEK_ILANLAR = [
     detay: { emlakTipi: 'Arsa', ilanTuru: 'Satılık', metrekare: '450', imarDurumu: 'Konut' },
   },
   {
+    ornekKey: 'ornek-emlak-ofis-levent',
+    baslik: 'Kiralık Ofis — Levent',
+    aciklama: 'Plaza katı, 180 m² açık ofis. Fiber internet altyapısı, 2 otopark yeri dahil. Hemen teslim.',
+    fiyat: '85000',
+    kategori: 'Emlak',
+    kategoriId: 'is-yeri-kiralik',
+    kategoriKok: 'emlak',
+    kategoriYolu: ['emlak', 'is-yeri', 'is-yeri-kiralik'],
+    kategoriEtiket: 'Emlak › İş Yeri › Kiralık',
+    platformlar: ['Sahibinden', 'Emlakjet'],
+    konum: { latitude: 41.082, longitude: 29.011, il: 'İstanbul', ilce: 'Beşiktaş', etiket: 'Levent, İstanbul' },
+    detay: { emlakTipi: 'Ofis', ilanTuru: 'Kiralık', metrekare: '180' },
+  },
+  {
+    ornekKey: 'ornek-vasita-corolla',
     baslik: '2020 Toyota Corolla 1.6 Vision',
-    aciklama: 'Hatasız, bakımlı, tek elden. Örnek vasıta ilanı.',
+    aciklama:
+      'Tramer kaydı yok, yetkili servis bakımlı. İlk sahibinden, boyasız, 62.000 km. Takas değerlendirilir.',
     fiyat: '985000',
     kategori: 'Araç',
     kategoriId: 'otomobil',
@@ -91,8 +127,9 @@ export const ORNEK_ILANLAR = [
     detay: { aracTipi: 'otomobil', marka: 'Toyota', model: 'Corolla', yil: '2020', kilometre: '62000', yakit: 'Benzin', vites: 'Otomatik' },
   },
   {
+    ornekKey: 'ornek-vasita-partner',
     baslik: 'Peugeot Partner Panelvan 2021',
-    aciklama: 'Minivan & panelvan örnek ilanı.',
+    aciklama: 'Soğutuculu kasa, dizel, 140.000 km. Ticari kullanıma hazır, muayenesi yeni.',
     fiyat: '650000',
     kategori: 'Araç',
     kategoriId: 'minivan',
@@ -104,8 +141,23 @@ export const ORNEK_ILANLAR = [
     detay: { marka: 'Peugeot', model: 'Partner', yil: '2021', kilometre: '140000', yakit: 'Dizel' },
   },
   {
+    ornekKey: 'ornek-vasita-pcx',
+    baslik: '2022 Honda PCX 125 — Sıfır Ayarında',
+    aciklama: 'Garaj çıkışlı, 8.500 km, ABS. Tüm bakımları yapılmış, ekstra kask dahil değil.',
+    fiyat: '145000',
+    kategori: 'Araç',
+    kategoriId: 'motosiklet',
+    kategoriKok: 'vasita',
+    kategoriYolu: ['vasita', 'motosiklet'],
+    kategoriEtiket: 'Vasıta › Motosiklet',
+    platformlar: ['Sahibinden'],
+    konum: { ...ORNEK_KONUM, ilce: 'Ataşehir', etiket: 'Ataşehir, İstanbul' },
+    detay: { marka: 'Honda', model: 'PCX 125', yil: '2022', kilometre: '8500' },
+  },
+  {
+    ornekKey: 'ornek-ikinci-el-iphone',
     baslik: 'iPhone 14 Pro Max 256 GB',
-    aciklama: 'Kutusunda, garantili. Örnek ikinci el ilanı.',
+    aciklama: 'Kutusunda, %92 pil sağlığı, Deep Purple. Fatura mevcut, garantisi devam ediyor.',
     fiyat: '42000',
     kategori: 'İkinci El',
     kategoriId: 'cep-telefonu',
@@ -117,8 +169,9 @@ export const ORNEK_ILANLAR = [
     detay: { urunTipi: 'Cep Telefonu', marka: 'Apple', durum: 'İyi' },
   },
   {
+    ornekKey: 'ornek-ikinci-el-macbook',
     baslik: 'MacBook Air M2 — Sıfır Ayarında',
-    aciklama: 'Az kullanılmış laptop. Örnek ilan.',
+    aciklama: '8 GB RAM, 256 GB SSD. Az kullanıldı, çiziksiz. Orijinal şarj aleti ve kılıf hediye.',
     fiyat: '38500',
     kategori: 'İkinci El',
     kategoriId: 'bilgisayar',
@@ -130,8 +183,9 @@ export const ORNEK_ILANLAR = [
     detay: { urunTipi: 'Laptop', marka: 'Apple', durum: 'Sıfır Ayarında' },
   },
   {
-    baslik: '2019 John Deere Traktör',
-    aciklama: 'İş makinesi örnek ilanı.',
+    ornekKey: 'ornek-traktor-john-deere',
+    baslik: '2019 John Deere Traktör 5M',
+    aciklama: '2.500 saat, kabinli, klimalı. Tarla ve bahçe işleri için bakımlı, lastikler yeni.',
     fiyat: '1250000',
     kategori: 'İş Makineleri',
     kategoriId: 'traktor-john-deere',
@@ -141,5 +195,109 @@ export const ORNEK_ILANLAR = [
     platformlar: ['Sahibinden'],
     konum: { latitude: 39.9334, longitude: 32.8597, il: 'Ankara', ilce: 'Polatlı', etiket: 'Polatlı, Ankara' },
     detay: { marka: 'John Deere', model: '5M', yil: '2019', calismaSaati: '2500' },
+  },
+  {
+    ornekKey: 'ornek-ekskavator-cat',
+    baslik: '2018 Caterpillar 320 Ekskavatör',
+    aciklama: 'Hidrolik kırıcı dahil, 6.800 saat. Şantiye projesi bitti, hemen teslim. Bakımları eksiksiz.',
+    fiyat: '4850000',
+    kategori: 'İş Makineleri',
+    kategoriId: 'ekskavator-kepce-caterpillar',
+    kategoriKok: 'is-makineleri',
+    kategoriYolu: ['is-makineleri', 'is-makineleri-grup', 'satilik', 'ekskavator-kepce', 'ekskavator-kepce-caterpillar'],
+    kategoriEtiket: 'İş Makineleri › Satılık › Ekskavatör (Kepçe) › Caterpillar',
+    platformlar: ['Sahibinden'],
+    konum: { latitude: 41.0082, longitude: 28.9784, il: 'İstanbul', ilce: 'Tuzla', etiket: 'Tuzla, İstanbul' },
+    detay: { marka: 'Caterpillar', model: '320', yil: '2018', calismaSaati: '6800' },
+  },
+  {
+    ornekKey: 'ornek-beko-jcb',
+    baslik: 'JCB 3CX Beko Loder 2017',
+    aciklama: 'Kazıcı-yükleyici, 4.200 saat. Paletli lastik, kabin ısıtıcılı. İnşaat ve altyapı işleri için ideal.',
+    fiyat: '2150000',
+    kategori: 'İş Makineleri',
+    kategoriId: 'beko-loder-kazici-yukleyici-jcb',
+    kategoriKok: 'is-makineleri',
+    kategoriYolu: [
+      'is-makineleri',
+      'is-makineleri-grup',
+      'satilik',
+      'beko-loder-kazici-yukleyici',
+      'beko-loder-kazici-yukleyici-jcb',
+    ],
+    kategoriEtiket: 'İş Makineleri › Satılık › Beko Loder › JCB',
+    platformlar: ['Sahibinden'],
+    konum: { latitude: 38.4237, longitude: 27.1428, il: 'İzmir', ilce: 'Bornova', etiket: 'Bornova, İzmir' },
+    detay: { marka: 'JCB', model: '3CX', yil: '2017', calismaSaati: '4200' },
+  },
+  {
+    ornekKey: 'ornek-forklift-komatsu',
+    baslik: 'Komatsu Forklift 2.5 Ton — 2020',
+    aciklama: 'Dizel, 3.800 saat. Depo ve lojistik kullanımına uygun, periyodik bakımları yapılmış.',
+    fiyat: '890000',
+    kategori: 'İş Makineleri',
+    kategoriId: 'forklift-komatsu',
+    kategoriKok: 'is-makineleri',
+    kategoriYolu: ['is-makineleri', 'is-makineleri-grup', 'satilik', 'forklift', 'forklift-komatsu'],
+    kategoriEtiket: 'İş Makineleri › Satılık › Forklift › Komatsu',
+    platformlar: ['Sahibinden'],
+    konum: { latitude: 40.9923, longitude: 29.1244, il: 'İstanbul', ilce: 'Pendik', etiket: 'Pendik, İstanbul' },
+    detay: { marka: 'Komatsu', model: 'FD25', yil: '2020', calismaSaati: '3800' },
+  },
+  {
+    ornekKey: 'ornek-vinc-liebherr',
+    baslik: 'Liebherr LTM 1050 Mobil Vinç',
+    aciklama: '50 ton kapasiteli, 2016 model. Tüm periyodik kontrolleri yapılmış, operatörsüz kiralanabilir.',
+    fiyat: '12500000',
+    kategori: 'İş Makineleri',
+    kategoriId: 'vinc-liebherr',
+    kategoriKok: 'is-makineleri',
+    kategoriYolu: ['is-makineleri', 'is-makineleri-grup', 'satilik', 'vinc', 'vinc-liebherr'],
+    kategoriEtiket: 'İş Makineleri › Satılık › Vinç › Liebherr',
+    platformlar: ['Sahibinden'],
+    konum: { latitude: 41.0255, longitude: 28.8726, il: 'İstanbul', ilce: 'Başakşehir', etiket: 'Başakşehir, İstanbul' },
+    detay: { marka: 'Liebherr', model: 'LTM 1050', yil: '2016', calismaSaati: '9200' },
+  },
+  {
+    ornekKey: 'ornek-dozer-cat',
+    baslik: 'Caterpillar D6 Dozer — 2015',
+    aciklama: 'Paleti yeni, 11.000 saat. Arazi düzleme ve hafriyat işleri için güçlü makine.',
+    fiyat: '6200000',
+    kategori: 'İş Makineleri',
+    kategoriId: 'dozer-caterpillar',
+    kategoriKok: 'is-makineleri',
+    kategoriYolu: ['is-makineleri', 'is-makineleri-grup', 'satilik', 'dozer', 'dozer-caterpillar'],
+    kategoriEtiket: 'İş Makineleri › Satılık › Dozer › Caterpillar',
+    platformlar: ['Sahibinden'],
+    konum: { latitude: 36.8969, longitude: 30.7133, il: 'Antalya', ilce: 'Kepez', etiket: 'Kepez, Antalya' },
+    detay: { marka: 'Caterpillar', model: 'D6', yil: '2015', calismaSaati: '11000' },
+  },
+  {
+    ornekKey: 'ornek-silindir-bomag',
+    baslik: 'Bomag Silindir — 2019',
+    aciklama: 'Asfalt sıkıştırma silindiri, 2.800 saat. Yol yapım projeleri için bakımlı, hemen çalışır durumda.',
+    fiyat: '1780000',
+    kategori: 'İş Makineleri',
+    kategoriId: 'silindir-bomag',
+    kategoriKok: 'is-makineleri',
+    kategoriYolu: ['is-makineleri', 'is-makineleri-grup', 'satilik', 'silindir', 'silindir-bomag'],
+    kategoriEtiket: 'İş Makineleri › Satılık › Silindir › Bomag',
+    platformlar: ['Sahibinden'],
+    konum: { latitude: 39.7767, longitude: 30.5206, il: 'Eskişehir', ilce: 'Odunpazarı', etiket: 'Eskişehir' },
+    detay: { marka: 'Bomag', model: 'BW 120', yil: '2019', calismaSaati: '2800' },
+  },
+  {
+    ornekKey: 'ornek-jenerator-cat',
+    baslik: '100 kVA Jeneratör — Sessiz Tip',
+    aciklama: 'Dizel, otomatik pano. Şantiye ve etkinlik kullanımına uygun, 1.200 saat. Taşınabilir kasa.',
+    fiyat: '420000',
+    kategori: 'İş Makineleri',
+    kategoriId: 'jenerator-caterpillar',
+    kategoriKok: 'is-makineleri',
+    kategoriYolu: ['is-makineleri', 'is-makineleri-grup', 'satilik', 'jenerator', 'jenerator-caterpillar'],
+    kategoriEtiket: 'İş Makineleri › Satılık › Jeneratör › Caterpillar',
+    platformlar: ['Sahibinden'],
+    konum: { latitude: 37.0662, longitude: 37.3833, il: 'Gaziantep', ilce: 'Şehitkamil', etiket: 'Gaziantep' },
+    detay: { marka: 'Caterpillar', model: 'DE100', yil: '2021', calismaSaati: '1200' },
   },
 ];

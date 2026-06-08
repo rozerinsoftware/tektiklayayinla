@@ -161,7 +161,7 @@ export const ICERIKLER = {
       },
       {
         tip: 'metin',
-        metin: `6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında, Tek Tıkla Yayınla olarak; üyelik, ilan yönetimi, güvenlik ve destek süreçlerinde işlediğimiz kimlik, iletişim, konum, işlem güvenliği ve kullanım verilerinizi mevzuata uygun, ölçülü ve şeffaf şekilde işliyoruz.\n\nVerileriniz; hizmet sunumu, kimlik doğrulama, dolandırıcılık önleme, yasal yükümlülükler ve açık rızanız dahilinde işlenir. Firebase altyapısı (kimlik doğrulama ve veritabanı) kullanılmaktadır.\n\nHaklarınız (erişim, düzeltme, silme, itiraz vb.) için ${DESTEK_EPOSTA} adresine başvurabilirsiniz.`,
+        metin: `6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında, Tek Tıkla Yayınla olarak; üyelik, ilan yönetimi, güvenlik ve destek süreçlerinde işlediğimiz kimlik, iletişim, konum, işlem güvenliği ve kullanım verilerinizi mevzuata uygun, ölçülü ve şeffaf şekilde işliyoruz.\n\nVerileriniz; hizmet sunumu, kimlik doğrulama, dolandırıcılık önleme, yasal yükümlülükler ve açık rızanız dahilinde işlenir. Firebase altyapısı (kimlik doğrulama ve veritabanı) ve Cloudinary (ilan fotoğrafları) kullanılmaktadır.\n\nTam gizlilik politikası: https://tektiklayayinla.web.app/gizlilik.html\n\nHaklarınız (erişim, düzeltme, silme, itiraz vb.) için ${DESTEK_EPOSTA} adresine başvurabilirsiniz.`,
       },
     ],
   },

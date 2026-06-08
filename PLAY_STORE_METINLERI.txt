@@ -1,0 +1,24 @@
+=== GOOGLE PLAY — KISA AÇIKLAMA (80 karakter) ===
+Tek yerden ilan ver: emlak, vasıta, ikinci el. Kendi vitrininizde yayınlayın.
+
+=== GOOGLE PLAY — UZUN AÇIKLAMA ===
+Tek Tıkla Yayınla ile emlak, vasıta, ikinci el ve iş makineleri ilanlarınızı tek akışta oluşturun.
+
+ÖNEMLİ: Bu uygulama Sahibinden, Arabam.com, Letgo veya Emlakjet gibi sitelere otomatik ilan göndermez. Platform seçimi simülasyon amaçlıdır. İlanlarınız öncelikle Tek Tıkla Yayınla vitrininde listelenir.
+
+Özellikler:
+• Kategori ağacı (emlak, vasıta, ikinci el, iş makineleri)
+• Fotoğraf, konum, detaylı ilan formu
+• Canlı vitrin ve arama
+• Profil, ilan yönetimi, mesajlaşma, favoriler
+• E-posta doğrulamalı güvenli giriş
+
+Gizlilik politikası: https://tektiklayayinla.web.app/gizlilik.html
+Destek: destek@tektiklayayinla.com
+
+=== DATA SAFETY (Play Console formu için özet) ===
+Toplanan: E-posta, ad, ilan metni, konum, fotoğraf
+Amaç: Hesap, ilan yayını, mesajlaşma
+Paylaşım: Firebase (auth+DB), Cloudinary (foto)
+Şifreleme: HTTPS / Firebase standart güvenlik
+Silme: Uygulama içi hesap/ilan silme + e-posta talebi

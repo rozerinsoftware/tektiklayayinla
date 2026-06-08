@@ -1,18 +1,24 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { colors, radius, shadow, spacing, getKategoriMeta, formatFiyat } from '../constants/theme';
 import { kokIdToMetaKey } from '../constants/kategoriler';
+import { gecerliKapakFoto } from '../utils/ilanFoto';
 
 /** Sahibinden vitrin — 2 sütun grid kartı */
 export default function IlanVitrinKart({ ilan, onPress, onSil }) {
   const metaKey = ilan.kategoriKok ? kokIdToMetaKey(ilan.kategoriKok) : ilan.kategori;
   const meta = getKategoriMeta(metaKey);
   const ilanNo = ilan.id ? `#${String(ilan.id).slice(-9)}` : '';
+  const kapakFoto = gecerliKapakFoto(ilan.fotograflar);
 
   return (
     <TouchableOpacity style={styles.kart} onPress={onPress} activeOpacity={0.88}>
       <View style={[styles.gorsel, { backgroundColor: meta.bg }]}>
-        <Text style={styles.gorselEmoji}>{meta.emoji}</Text>
+        {kapakFoto ? (
+          <Image source={{ uri: kapakFoto }} style={styles.gorselFoto} resizeMode="cover" />
+        ) : (
+          <Text style={styles.gorselEmoji}>{meta.emoji}</Text>
+        )}
         {ilanNo ? <Text style={styles.ilanNo}>{ilanNo}</Text> : null}
       </View>
       <View style={styles.alt}>
@@ -39,7 +45,7 @@ export default function IlanVitrinKart({ ilan, onPress, onSil }) {
 
 const styles = StyleSheet.create({
   kart: {
-    flex: 1,
+    width: '100%',
     backgroundColor: colors.surface,
     borderRadius: radius.sm,
     overflow: 'hidden',
@@ -56,6 +62,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   gorselEmoji: { fontSize: 48 },
+  gorselFoto: { width: '100%', height: '100%' },
   ilanNo: {
     position: 'absolute',
     top: 6,

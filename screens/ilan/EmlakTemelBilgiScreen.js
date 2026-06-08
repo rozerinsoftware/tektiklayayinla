@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { AppInput, PrimaryButton } from '../../components/ui';
 import IlanBreadcrumb from '../../components/ilan/IlanBreadcrumb';
+import IlanFotografSec from '../../components/ilan/IlanFotografSec';
 import { colors, spacing, radius, shadow } from '../../constants/theme';
 import { kokIdToMetaKey } from '../../constants/kategoriler';
 import {
@@ -67,6 +68,7 @@ export default function EmlakTemelBilgiScreen({ navigation, route }) {
     return baslangic;
   });
   const [hatalar, setHatalar] = useState({});
+  const [fotograflar, setFotograflar] = useState([]);
 
   const fiyatGuncelle = (text) => {
     if (/[a-zA-ZğüşıöçĞÜŞİÖÇ]/.test(text)) {
@@ -130,6 +132,7 @@ export default function EmlakTemelBilgiScreen({ navigation, route }) {
         kategoriYolu: secilenKategori.kategoriYolu,
         kategoriEtiket: secilenKategori.kategoriEtiket,
         kategoriKok: 'emlak',
+        fotograflar,
         ...detay,
       },
       adim: 2,
@@ -157,6 +160,8 @@ export default function EmlakTemelBilgiScreen({ navigation, route }) {
         <Text style={styles.uyari}>
           Ticaret Bakanlığı fiyat artışlarını takip eder. Yanıltıcı fiyat idari yaptırıma tabidir.
         </Text>
+
+        <IlanFotografSec fotograflar={fotograflar} onChange={setFotograflar} />
 
         <AppInput label="İlan Başlığı *" icon="text-outline" placeholder="Başlık girin" value={baslik} onChangeText={setBaslik} />
         <AppInput
