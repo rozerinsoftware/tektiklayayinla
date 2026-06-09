@@ -38,16 +38,43 @@ const VITRIN_YATAY_PAD = spacing.sm * 2;
 const VITRIN_ARALIK = spacing.sm;
 const VITRIN_HUCRE_GENISligi = (EKRAN_GENISligi - VITRIN_YATAY_PAD - VITRIN_ARALIK) / 2;
 
+const vitrinHeaderStyles = StyleSheet.create({
+  vitrinHeader: {
+    backgroundColor: colors.headerBg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+  },
+  vitrinHeaderSatir: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoKutu: {
+    position: 'absolute',
+    left: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: '#FACC15',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoHarfi: { fontSize: 18, fontWeight: '900', color: '#1A1A1A' },
+  vitrinBaslik: { fontSize: 18, fontWeight: '700', color: colors.primaryText },
+  bildirimBtn: { position: 'absolute', right: 0, padding: 4 },
+});
+
 const VitrinBaslik = React.memo(function VitrinBaslik({ navigation }) {
   return (
-    <View style={styles.vitrinHeader}>
-      <View style={styles.vitrinHeaderSatir}>
-        <View style={styles.logoKutu}>
-          <Text style={styles.logoHarfi}>T</Text>
+    <View style={vitrinHeaderStyles.vitrinHeader}>
+      <View style={vitrinHeaderStyles.vitrinHeaderSatir}>
+        <View style={vitrinHeaderStyles.logoKutu}>
+          <Text style={vitrinHeaderStyles.logoHarfi}>T</Text>
         </View>
-        <Text style={styles.vitrinBaslik}>Vitrin</Text>
+        <Text style={vitrinHeaderStyles.vitrinBaslik}>Vitrin</Text>
         <TouchableOpacity
-          style={styles.bildirimBtn}
+          style={vitrinHeaderStyles.bildirimBtn}
           onPress={() => {
             if (!girisIste(navigation)) return;
             navigation.getParent()?.navigate('Profilim', { screen: 'Bildirimler' });
