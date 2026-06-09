@@ -16,7 +16,7 @@ import { ORNEK_ILANLAR } from '../constants/ornekIlanlar';
 import IlanKart from '../components/IlanKart';
 import { colors, radius, shadow, spacing } from '../constants/theme';
 
-const ORNEK_ILAN_SAYISI = ORNEK_ILANLAR.length;
+const ORNEK_ILAN_SAYISI = Array.isArray(ORNEK_ILANLAR) ? ORNEK_ILANLAR.length : 0;
 
 export default function AdminPanelScreen({ navigation }) {
   const [ilanlar, setIlanlar] = useState([]);
@@ -53,7 +53,7 @@ export default function AdminPanelScreen({ navigation }) {
       sadeceEksik ? 'Eksik ilanları ekle' : 'Örnek ilanları yükle / güncelle',
       sadeceEksik
         ? 'Listede olmayan yeni örnek ilanlar eklenir (mevcut ilanlara dokunulmaz).'
-        : `${ORNEK_ILAN_SAYISI} demo ilan yüklenir / güncellenir. Örnek ilanlarda stok fotoğraf yok — vitrinde kategori emojisi gösterilir.`,
+        : `${ORNEK_ILAN_SAYISI} demo ilan yüklenir / güncellenir. Her ilana uygun demo fotoğraf (Wikimedia) eklenir.`,
       [
         { text: 'İptal', style: 'cancel' },
         {

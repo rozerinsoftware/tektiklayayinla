@@ -51,7 +51,10 @@ function AlanSatiri({ alan, deger, onSec, hata }) {
 
 export default function EmlakTemelBilgiScreen({ navigation, route }) {
   const secilenKategori = route.params?.secilenKategori;
-  const profil = useMemo(() => getEmlakProfil(secilenKategori), [secilenKategori]);
+  const profil = useMemo(() => {
+    const p = getEmlakProfil(secilenKategori);
+    return { ...p, alanlar: Array.isArray(p?.alanlar) ? p.alanlar : [] };
+  }, [secilenKategori]);
   const breadcrumb = useMemo(
     () => [...emlakBreadcrumb(secilenKategori), 'TEMEL BİLGİLER'],
     [secilenKategori]
@@ -79,11 +82,16 @@ export default function EmlakTemelBilgiScreen({ navigation, route }) {
 
   const alanSec = useCallback((key, deger, alanDef) => {
     if (alanDef?.tip === 'select') {
+      const secenekler = Array.isArray(alanDef.secenekler) ? alanDef.secenekler : [];
+      if (!secenekler.length) {
+        Alert.alert(alanDef.label, 'Seçenek bulunamadı.');
+        return;
+      }
       Alert.alert(
         alanDef.label,
         '',
         [
-          ...alanDef.secenekler.map((s) => ({
+          ...secenekler.map((s) => ({
             text: s,
             onPress: () => {
               setAlanDegerleri((prev) => ({ ...prev, [key]: s }));

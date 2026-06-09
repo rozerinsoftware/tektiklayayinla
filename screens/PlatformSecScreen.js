@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Image, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { publishIlan } from '../api';
+import { konumZorunluMu } from '../utils/konum';
 import { PrimaryButton, SectionTitle } from '../components/ui';
 import { colors, radius, shadow, spacing } from '../constants/theme';
 
@@ -36,6 +37,16 @@ export default function PlatformSecScreen({ navigation, route }) {
     const fiyatSayi = Number(String(ilan.fiyat || '').replace(/\D/g, ''));
     if (!Number.isFinite(fiyatSayi) || fiyatSayi <= 0) {
       Alert.alert('Fiyat hatalı', 'Geçerli bir fiyat girilmeden ilan eklenemez.');
+      return;
+    }
+    if (
+      konumZorunluMu(ilan.kategoriKok) &&
+      (!ilan.konum?.latitude || !ilan.konum?.longitude)
+    ) {
+      Alert.alert(
+        'Konum eksik',
+        'Bu kategori için konum işaretlemeniz gerekir. İlan verme adımlarına dönüp konumu seçin.'
+      );
       return;
     }
     if (yayinlaniyor) return;

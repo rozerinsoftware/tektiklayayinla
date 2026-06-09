@@ -22,14 +22,15 @@ import { ilanKategoriEslesir, getKategoriById, getKategoriByYol } from '../const
 import {
   filtreYayindaIlanlar,
   siralamaIlanlar,
+  vitrinSiralamaIlanlar,
   uygulaIlanFiltreleri,
-  SIRALAMA_SECENEKLERI,
 } from '../utils/ilanYardimci';
 import IlanAramaToolbar from '../components/IlanAramaToolbar';
 import { IlanFiltreModal, IlanSiralamaModal } from '../components/IlanFiltreModal';
 import { colors, radius, spacing } from '../constants/theme';
 import IlanKart from '../components/IlanKart';
 import IlanVitrinKart from '../components/IlanVitrinKart';
+import IlanAramaSatirKart from '../components/IlanAramaSatirKart';
 import { openIlanDetay } from '../utils/navigationHelpers';
 
 const EKRAN_GENISligi = Dimensions.get('window').width;
@@ -67,6 +68,7 @@ export default function IlanListesiScreen({ navigation, route }) {
   const kategoriBaslik = route.params?.kategoriBaslik || null;
   const ownerId = route.params?.ownerId || null;
   const vitrinParam = route.params?.vitrin;
+  const tumIlanlarModu = route.params?.tumIlanlar === true;
 
   const [ilanlar, setIlanlar] = useState([]);
   const [yukleniyor, setYukleniyor] = useState(true);
@@ -77,6 +79,9 @@ export default function IlanListesiScreen({ navigation, route }) {
   const [filtre, setFiltre] = useState({});
   const [filtreModal, setFiltreModal] = useState(false);
   const [siraModal, setSiraModal] = useState(false);
+  const [gorunum, setGorunum] = useState(
+    route.params?.tumIlanlar || route.params?.aramaModu ? 'liste' : 'grid'
+  );
 
   const kategoriBilgi = kategoriYolu?.length
     ? getKategoriByYol(kategoriYolu)
@@ -88,8 +93,11 @@ export default function IlanListesiScreen({ navigation, route }) {
     kategoriBilgi?.kokId === 'is-makineleri' || kategoriId === 'is-makineleri';
 
   const vitrinModu =
-    vitrinParam === true || (vitrinParam !== false && !ownerId && !aramaModu);
-  const anaVitrinEkrani = vitrinModu && !kategoriId && !ownerId && !aramaModu;
+    !tumIlanlarModu &&
+    (vitrinParam === true || (vitrinParam !== false && !ownerId && !aramaModu));
+  const anaVitrinEkrani =
+    vitrinModu && !kategoriId && !ownerId && !aramaModu && !tumIlanlarModu;
+  const sahibindenListeEkrani = tumIlanlarModu || aramaModu || (kategoriId && !vitrinModu);
 
   const ilanlariGetir = useCallback(async (cekme = false) => {
     try {
@@ -117,12 +125,14 @@ export default function IlanListesiScreen({ navigation, route }) {
   }, [route.params?.yenile, ilanlariGetir]);
 
   useEffect(() => {
-    if (kategoriBaslik) {
+    if (tumIlanlarModu) {
+      navigation.setOptions({ title: 'Tüm İlanlar', headerShown: true });
+    } else if (kategoriBaslik) {
       navigation.setOptions({ title: kategoriBaslik, headerShown: true });
     } else if (vitrinModu && !kategoriId) {
       navigation.setOptions?.({ headerShown: false });
     }
-  }, [navigation, kategoriBaslik, vitrinModu, kategoriId]);
+  }, [navigation, kategoriBaslik, vitrinModu, kategoriId, tumIlanlarModu]);
 
   useEffect(() => {
     (async () => {
@@ -165,10 +175,14 @@ export default function IlanListesiScreen({ navigation, route }) {
       );
     }
     liste = uygulaIlanFiltreleri(liste, filtre);
-    return siralamaIlanlar(liste, siralama);
-  }, [ilanlar, arama, kategoriId, kategoriYolu, ownerId, filtre, siralama]);
+    return anaVitrinEkrani
+      ? vitrinSiralamaIlanlar(liste, siralama)
+      : siralamaIlanlar(liste, siralama);
+  }, [ilanlar, arama, kategoriId, kategoriYolu, ownerId, filtre, siralama, anaVitrinEkrani]);
 
-  const uid = getCurrentUserId();
+  const tumIlanlaraGit = useCallback(() => {
+    navigation.push('IlanListesi', { tumIlanlar: true, vitrin: false });
+  }, [navigation]);
 
   const ilanSil = useCallback(
     (id) => {
@@ -191,20 +205,52 @@ export default function IlanListesiScreen({ navigation, route }) {
     [ilanlariGetir]
   );
 
+  const silmeFn = (ownerId) => {
+    if (!ownerId) return undefined;
+    let mevcutUid = null;
+    try {
+      mevcutUid = getCurrentUserId();
+    } catch {
+      return undefined;
+    }
+    if (!mevcutUid || mevcutUid !== ownerId) return undefined;
+    return (id) => ilanSil(id);
+  };
+
+  const vitrinGridKart = (item) => {
+    const silFn = silmeFn(item.ownerId);
+    return (
+      <View key={String(item.id)} style={styles.vitrinHucre}>
+        <IlanVitrinKart
+          ilan={item}
+          onPress={() => openIlanDetay(navigation, item)}
+          onSil={silFn ? () => silFn(item.id) : undefined}
+        />
+      </View>
+    );
+  };
+
+  const listeSatirKart = (item) => {
+    const oneCikan = item.oneCikan || item.kategoriKok === 'emlak' || item.kategoriKok === 'vasita';
+    return (
+      <IlanAramaSatirKart
+        key={String(item.id)}
+        ilan={item}
+        oneCikan={oneCikan}
+        onPress={() => openIlanDetay(navigation, item)}
+      />
+    );
+  };
+
   const renderKart = useCallback(
     ({ item }) => {
-      const silFn = uid && item.ownerId === uid ? () => ilanSil(item.id) : undefined;
-      if (vitrinModu) {
-        return (
-          <View style={styles.gridHucre}>
-            <IlanVitrinKart
-              ilan={item}
-              onPress={() => openIlanDetay(navigation, item)}
-              onSil={silFn}
-            />
-          </View>
-        );
+      let mevcutUid = null;
+      try {
+        mevcutUid = getCurrentUserId();
+      } catch {
+        mevcutUid = null;
       }
+      const silFn = mevcutUid && item.ownerId === mevcutUid ? () => ilanSil(item.id) : undefined;
       return (
         <IlanKart
           ilan={item}
@@ -213,7 +259,7 @@ export default function IlanListesiScreen({ navigation, route }) {
         />
       );
     },
-    [uid, vitrinModu, navigation, ilanSil]
+    [navigation, ilanSil]
   );
 
   const listHeader = useMemo(
@@ -221,14 +267,25 @@ export default function IlanListesiScreen({ navigation, route }) {
       <>
         {anaVitrinEkrani ? <VitrinBaslik navigation={navigation} /> : null}
 
-        {!anaVitrinEkrani ? (
+        {tumIlanlarModu ? (
+          <IlanAramaToolbar
+            onFiltre={() => setFiltreModal(true)}
+            onSira={() => setSiraModal(true)}
+            onGorunum={() => setGorunum((g) => (g === 'grid' ? 'liste' : 'grid'))}
+            onAramaKaydet={aramayiFavorile}
+          />
+        ) : null}
+
+        {!anaVitrinEkrani && !tumIlanlarModu ? (
           <View style={styles.header}>
-            <Text style={styles.headerLogo}>TekTıklaYayınla</Text>
+            <Text style={styles.headerLogo}>
+              {aramaModu && arama.trim() ? 'Arama Sonucu' : 'TekTıklaYayınla'}
+            </Text>
             <Text style={styles.headerAlt}>
               {kategoriBaslik
-                ? kategoriBaslik
+                ? `${filtrelenmis.length} ilan · ${kategoriBaslik}`
                 : aramaModu
-                  ? 'İlan ara'
+                  ? `${filtrelenmis.length} ilan`
                   : `${filtrelenmis.length} ilan listeleniyor`}
             </Text>
           </View>
@@ -261,12 +318,9 @@ export default function IlanListesiScreen({ navigation, route }) {
             </View>
             {(kategoriId || aramaModu) && !ownerId ? (
               <IlanAramaToolbar
-                siralamaLabel={SIRALAMA_SECENEKLERI.find((s) => s.id === siralama)?.label}
                 onFiltre={() => setFiltreModal(true)}
                 onSira={() => setSiraModal(true)}
-                onGorunum={() =>
-                  Alert.alert('Görünüm', vitrinModu ? 'Liste görünümü yakında.' : 'Grid görünümü aktif.')
-                }
+                onGorunum={() => setGorunum((g) => (g === 'grid' ? 'liste' : 'grid'))}
                 onAramaKaydet={aramayiFavorile}
                 chipEtiketler={
                   ikinciElModu
@@ -323,9 +377,11 @@ export default function IlanListesiScreen({ navigation, route }) {
     ),
     [
       anaVitrinEkrani,
+      tumIlanlarModu,
       kategoriId,
       kategoriBaslik,
       aramaModu,
+      arama,
       filtrelenmis.length,
       arama,
       aramaFavori,
@@ -361,22 +417,24 @@ export default function IlanListesiScreen({ navigation, route }) {
     </View>
   );
 
-  const vitrinGrid = (
-    <View style={styles.vitrinGrid}>
-      {filtrelenmis.map((item) => {
-        const silFn = uid && item.ownerId === uid ? () => ilanSil(item.id) : undefined;
-        return (
-          <View key={String(item.id)} style={styles.vitrinHucre}>
-            <IlanVitrinKart
-              ilan={item}
-              onPress={() => openIlanDetay(navigation, item)}
-              onSil={silFn}
-            />
-          </View>
-        );
-      })}
-    </View>
+  const vitrinIcerik = (
+    <>
+      <View style={styles.vitrinGrid}>{filtrelenmis.map((item) => vitrinGridKart(item))}</View>
+      {filtrelenmis.length > 0 ? (
+        <TouchableOpacity style={styles.tumunuGoster} onPress={tumIlanlaraGit} activeOpacity={0.85}>
+          <Text style={styles.tumunuGosterText}>Tüm İlanlar</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+        </TouchableOpacity>
+      ) : null}
+    </>
   );
+
+  const listeModuIcerik =
+    gorunum === 'liste' ? (
+      <View style={styles.listeGorunum}>{filtrelenmis.map((item) => listeSatirKart(item))}</View>
+    ) : (
+      <View style={styles.vitrinGrid}>{filtrelenmis.map((item) => vitrinGridKart(item))}</View>
+    );
 
   return (
     <View style={styles.kok}>
@@ -388,6 +446,8 @@ export default function IlanListesiScreen({ navigation, route }) {
           onUygula={setFiltre}
           ikinciElModu={ikinciElModu}
           isMakineleriModu={isMakineleriModu}
+          vitrinModu={tumIlanlarModu || (vitrinModu && !!kategoriId)}
+          sonucSayisi={filtrelenmis.length}
         />
         <IlanSiralamaModal
           visible={siraModal}
@@ -400,6 +460,18 @@ export default function IlanListesiScreen({ navigation, route }) {
             {listHeader}
             <ActivityIndicator size="large" color={colors.primaryDark} style={styles.loader} />
           </View>
+        ) : anaVitrinEkrani ? (
+          <ScrollView
+            style={styles.listeFlex}
+            contentContainerStyle={[styles.liste, styles.listeVitrin]}
+            showsVerticalScrollIndicator
+            refreshControl={
+              <RefreshControl refreshing={yenileniyor} onRefresh={() => ilanlariGetir(true)} />
+            }
+          >
+            {listHeader}
+            {filtrelenmis.length === 0 ? listeBos() : vitrinIcerik}
+          </ScrollView>
         ) : vitrinModu ? (
           <ScrollView
             style={styles.listeFlex}
@@ -410,7 +482,7 @@ export default function IlanListesiScreen({ navigation, route }) {
             }
           >
             {listHeader}
-            {filtrelenmis.length === 0 ? listeBos() : vitrinGrid}
+            {filtrelenmis.length === 0 ? listeBos() : listeModuIcerik}
           </ScrollView>
         ) : (
           <FlatList
@@ -423,7 +495,17 @@ export default function IlanListesiScreen({ navigation, route }) {
               <RefreshControl refreshing={yenileniyor} onRefresh={() => ilanlariGetir(true)} />
             }
             ListEmptyComponent={listeBos}
-            renderItem={renderKart}
+            renderItem={({ item }) =>
+              gorunum === 'liste' && (sahibindenListeEkrani || tumIlanlarModu) ? (
+                <IlanAramaSatirKart
+                  ilan={item}
+                  oneCikan={item.oneCikan || item.kategoriKok === 'emlak' || item.kategoriKok === 'vasita'}
+                  onPress={() => openIlanDetay(navigation, item)}
+                />
+              ) : (
+                renderKart({ item })
+              )
+            }
           />
         )}
       </SafeAreaView>
@@ -517,8 +599,37 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     marginBottom: spacing.xs,
   },
+  vitrinBolum: { marginBottom: spacing.md },
   vitrinBolumText: { fontSize: 15, fontWeight: '700', color: colors.text },
   vitrinBolumSayi: { fontSize: 13, color: colors.textSecondary },
+  ilanSayiSatir: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  ilanSayiText: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
+  tumunuGoster: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 16,
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  tumunuGosterText: { fontSize: 14, fontWeight: '700', color: colors.primary },
+  listeGorunum: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   liste: { paddingHorizontal: spacing.lg, paddingBottom: 32 },
   listeVitrin: { paddingHorizontal: spacing.sm, paddingTop: spacing.sm },
   vitrinGrid: {

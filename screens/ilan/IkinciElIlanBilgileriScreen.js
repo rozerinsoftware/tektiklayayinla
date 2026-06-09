@@ -14,7 +14,7 @@ import IlanBreadcrumb from '../../components/ilan/IlanBreadcrumb';
 import { AppInput, PrimaryButton } from '../../components/ui';
 import { colors, spacing, radius } from '../../constants/theme';
 import { kokIdToMetaKey } from '../../constants/kategoriler';
-import { formatKonumEtiket } from '../../utils/konum';
+import KonumSecici from '../../components/KonumSecici';
 import { ikinciElBreadcrumb } from '../../constants/ikinciElAlanlari';
 
 const ILETISIM_SECENEKLERI = ['Telefon ve Soru Cevap', 'Sadece Telefon', 'Sadece Soru Cevap'];
@@ -49,16 +49,6 @@ export default function IkinciElIlanBilgileriScreen({ navigation, route }) {
     }
   };
 
-  const konumSec = () => {
-    navigation.navigate('IlanKonumBaslangic', {
-      taslakIlan: birlestir(),
-      adim: 3,
-      toplamAdim,
-      sonrakiEkran: 'IkinciElIlanBilgileri',
-      geriParams: { secilenKategori, taslakIlan: birlestir(), adim, toplamAdim },
-    });
-  };
-
   const birlestir = () => ({
     ...taslakIlan,
     baslik: baslik.trim(),
@@ -70,21 +60,16 @@ export default function IkinciElIlanBilgileriScreen({ navigation, route }) {
     kategoriKok: 'ikinci-el',
   });
 
-  React.useEffect(() => {
-    const sub = navigation.addListener('focus', () => {
-      const gelen = route.params?.taslakIlan;
-      if (gelen?.konum) setKonum(gelen.konum);
-    });
-    return sub;
-  }, [navigation, route.params?.taslakIlan]);
-
   const devamEt = () => {
     if (!baslik.trim() || !aciklama.trim()) {
       Alert.alert('Uyarı', 'Başlık ve açıklama zorunludur.');
       return;
     }
-    if (!konum?.latitude) {
-      Alert.alert('Konum gerekli', 'Lütfen ilan konumunu seçin.');
+    if (!konum?.latitude || !konum?.longitude) {
+      Alert.alert(
+        'Konum gerekli',
+        '2. el ilanlarda elden teslim için buluşma konumunuzu işaretleyin.'
+      );
       return;
     }
     if (!kurallar) {
@@ -125,11 +110,12 @@ export default function IkinciElIlanBilgileriScreen({ navigation, route }) {
         style={{ minHeight: 80, textAlignVertical: 'top' }}
       />
 
-      <TouchableOpacity style={styles.secimSatir} onPress={konumSec}>
-        <Text style={styles.secimLabel}>Konumu</Text>
-        <Text style={styles.secimDeger}>{formatKonumEtiket(konum) || 'Seçin'}</Text>
-        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-      </TouchableOpacity>
+      <KonumSecici
+        konum={konum}
+        onKonumChange={setKonum}
+        zorunlu
+        aciklama="Elden teslim için alıcıyla buluşacağınız yakını işaretleyin. GPS ile konumunuz kaydedilir."
+      />
 
       <TouchableOpacity
         style={styles.secimSatir}

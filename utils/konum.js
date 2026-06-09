@@ -1,9 +1,34 @@
 import { Alert, Linking, Platform } from 'react-native';
 import * as Location from 'expo-location';
 
-/** Sahibinden tarzı: emlak, vasıta, ikinci el ve iş makinelerinde konum zorunlu */
+/** Tüm ilan türlerinde konum zorunlu (elden teslim / yakınlık / harita) */
 export function konumZorunluMu(kategoriKok) {
-  return ['emlak', 'vasita', 'ikinci-el', 'is-makineleri'].includes(kategoriKok);
+  return Boolean(kategoriKok);
+}
+
+/** GPS yoksa veya emülatörde manuel seçim için hazır il/ilçe noktaları */
+export const KONUM_SECENEKLERI = [
+  { etiket: 'Kadıköy, İstanbul', latitude: 41.015137, longitude: 28.97953, il: 'İstanbul', ilce: 'Kadıköy' },
+  { etiket: 'Beşiktaş, İstanbul', latitude: 41.0422, longitude: 29.0067, il: 'İstanbul', ilce: 'Beşiktaş' },
+  { etiket: 'Üsküdar, İstanbul', latitude: 41.0234, longitude: 29.0152, il: 'İstanbul', ilce: 'Üsküdar' },
+  { etiket: 'Ataşehir, İstanbul', latitude: 40.9923, longitude: 29.1244, il: 'İstanbul', ilce: 'Ataşehir' },
+  { etiket: 'Çankaya, Ankara', latitude: 39.9208, longitude: 32.8541, il: 'Ankara', ilce: 'Çankaya' },
+  { etiket: 'Bornova, İzmir', latitude: 38.4237, longitude: 27.1428, il: 'İzmir', ilce: 'Bornova' },
+  { etiket: 'Bodrum, Muğla', latitude: 37.0344, longitude: 27.4305, il: 'Muğla', ilce: 'Bodrum' },
+  { etiket: 'Kepez, Antalya', latitude: 36.8969, longitude: 30.7133, il: 'Antalya', ilce: 'Kepez' },
+  { etiket: 'Gaziantep', latitude: 37.0662, longitude: 37.3833, il: 'Gaziantep', ilce: 'Şehitkamil' },
+  { etiket: 'Eskişehir', latitude: 39.7767, longitude: 30.5206, il: 'Eskişehir', ilce: 'Odunpazarı' },
+];
+
+export function konumSecenegiOlustur(secenek) {
+  return {
+    latitude: secenek.latitude,
+    longitude: secenek.longitude,
+    il: secenek.il || '',
+    ilce: secenek.ilce || '',
+    mahalle: '',
+    etiket: secenek.etiket,
+  };
 }
 
 export function formatKonumEtiket(konum) {
@@ -46,12 +71,16 @@ function geocodeSonucuIsle(results, coords) {
 export async function mevcutKonumuAl() {
   const { status } = await Location.requestForegroundPermissionsAsync();
   if (status !== 'granted') {
-    throw new Error('Konum izni verilmedi. Ayarlardan konuma izin verin.');
+    throw new Error('Konum izni verilmedi. Ayarlardan izin verin veya listeden il/ilçe seçin.');
   }
 
-  const pos = await Location.getCurrentPositionAsync({
-    accuracy: Location.Accuracy.Balanced,
-  });
+  let pos = await Location.getLastKnownPositionAsync();
+  if (!pos) {
+    pos = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+      timeout: 12000,
+    });
+  }
 
   const coords = {
     latitude: pos.coords.latitude,
@@ -72,6 +101,33 @@ function koordinatSayiyaCevir(deger) {
   return Number.isFinite(parsed) ? parsed : NaN;
 }
 
+async function urlAc(url, { tarayici = false } = {}) {
+  try {
+    if (!tarayici) {
+      const acilabilir = await Linking.canOpenURL(url);
+      if (!acilabilir) return false;
+    }
+    await Linking.openURL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function koordinatGecerli(konum) {
+  const lat = koordinatSayiyaCevir(konum?.latitude);
+  const lng = koordinatSayiyaCevir(konum?.longitude);
+  return !Number.isNaN(lat) && !Number.isNaN(lng) ? { lat, lng } : null;
+}
+
+/** İlan detayı — OpenStreetMap önizleme görseli */
+export function konumStatikHaritaUrl(konum, { genislik = 640, yukseklik = 360 } = {}) {
+  const koord = koordinatGecerli(konum);
+  if (!koord) return null;
+  const { lat, lng } = koord;
+  return `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=15&size=${genislik}x${yukseklik}&markers=${lat},${lng},red-pushpin`;
+}
+
 export async function konumHaritadaAc(konum) {
   const lat = koordinatSayiyaCevir(konum?.latitude);
   const lng = koordinatSayiyaCevir(konum?.longitude);
@@ -85,32 +141,23 @@ export async function konumHaritadaAc(konum) {
   }
 
   const etiket = encodeURIComponent(konum?.etiket || 'Konum');
-  const adaylar = Platform.select({
-    ios: [
-      `maps:0,0?q=${etiket}&ll=${lat},${lng}`,
-      `https://maps.apple.com/?ll=${lat},${lng}&q=${etiket}`,
-    ],
-    android: [
-      `geo:0,0?q=${lat},${lng}(${etiket})`,
-      `geo:${lat},${lng}?q=${lat},${lng}`,
-      `google.navigation:q=${lat},${lng}`,
-    ],
-    default: [],
-  });
+  // Google Maps mobil sayfası intent:// yönlendirmesi yapar — emülatör WebView'da patlar.
+  // OpenStreetMap tarayıcıda doğrudan açılır (jüri / demo için güvenilir).
+  const tarayiciHarita = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`;
 
-  for (const url of adaylar) {
-    try {
-      await Linking.openURL(url);
-      return;
-    } catch {
-      // sıradaki şemayı dene
-    }
+  const adaylar = [
+    ...(Platform.select({
+      ios: [`maps:0,0?q=${etiket}&ll=${lat},${lng}`, `https://maps.apple.com/?ll=${lat},${lng}&q=${etiket}`],
+      android: [`geo:0,0?q=${lat},${lng}(${etiket})`, `geo:${lat},${lng}?q=${lat},${lng}`],
+      default: [],
+    }) || []),
+    tarayiciHarita,
+  ];
+
+  for (let i = 0; i < adaylar.length; i += 1) {
+    const tarayici = adaylar[i].startsWith('https://');
+    if (await urlAc(adaylar[i], { tarayici })) return;
   }
 
-  Alert.alert(
-    'Harita açılamadı',
-    Platform.OS === 'android'
-      ? 'Google Maps yüklü değil veya emülatörde harita uygulaması yok. Play Store\'dan Google Maps kurun.'
-      : 'Harita uygulaması açılamadı.'
-  );
+  Alert.alert('Harita açılamadı', `${konum?.etiket || 'Konum'}\n${lat.toFixed(5)}, ${lng.toFixed(5)}`);
 }

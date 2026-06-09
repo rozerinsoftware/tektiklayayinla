@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Alert } from 'react-native';
 import { AppInput, PrimaryButton } from '../../components/ui';
 import IlanBreadcrumb from '../../components/ilan/IlanBreadcrumb';
 import IlanFotografSec from '../../components/ilan/IlanFotografSec';
+import KonumSecici from '../../components/KonumSecici';
 import { colors, spacing } from '../../constants/theme';
 
 export default function HizmetIlanScreen({ navigation, route }) {
@@ -12,10 +13,15 @@ export default function HizmetIlanScreen({ navigation, route }) {
   const [fiyat, setFiyat] = useState('');
   const [telefon, setTelefon] = useState('');
   const [fotograflar, setFotograflar] = useState([]);
+  const [konum, setKonum] = useState(null);
 
   const devam = () => {
     if (!baslik.trim() || !aciklama.trim()) {
       Alert.alert('Eksik', 'Başlık ve açıklama zorunludur.');
+      return;
+    }
+    if (!konum?.latitude || !konum?.longitude) {
+      Alert.alert('Konum gerekli', 'Hizmet verdiğiniz bölgeyi GPS veya listeden seçin.');
       return;
     }
     const fiyatSayi = Number(fiyat.replace(/\D/g, ''));
@@ -35,6 +41,7 @@ export default function HizmetIlanScreen({ navigation, route }) {
       kategoriKok: secilenKategori?.kategoriKok || 'hizmet',
       hizmet: true,
       fotograflar,
+      konum,
     };
     navigation.navigate('PlatformSec', { yeniIlan: taslak });
   };
@@ -70,6 +77,12 @@ export default function HizmetIlanScreen({ navigation, route }) {
         value={telefon}
         onChangeText={setTelefon}
         placeholder="05xx xxx xx xx"
+      />
+      <KonumSecici
+        konum={konum}
+        onKonumChange={setKonum}
+        zorunlu
+        aciklama="Hizmet verdiğiniz bölgeyi işaretleyin. Müşteriler yakınlığa göre arayabilir."
       />
       <PrimaryButton title="Devam Et" onPress={devam} icon="arrow-forward-outline" />
     </ScrollView>

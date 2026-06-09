@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing } from '../constants/theme';
 
 export default function IlanAramaToolbar({
-  siralamaLabel,
   onFiltre,
   onSira,
   onGorunum,
@@ -17,10 +16,10 @@ export default function IlanAramaToolbar({
     <View style={styles.wrap}>
       <View style={styles.ustSatir}>
         <ToolbarBtn icon="options-outline" label="Filtrele" onPress={onFiltre} />
-        <ToolbarBtn icon="swap-vertical-outline" label={siralamaLabel || 'Sırala'} onPress={onSira} />
+        <ToolbarBtn icon="swap-vertical-outline" label="Sırala" onPress={onSira} />
         <ToolbarBtn icon="grid-outline" label="Görünüm" onPress={onGorunum} />
         {onAramaKaydet ? (
-          <ToolbarBtn icon="bookmark-outline" label="Kaydet" onPress={onAramaKaydet} compact />
+          <ToolbarBtn icon="bookmark-outline" label="Aramayı Kaydet" onPress={onAramaKaydet} compact />
         ) : null}
       </View>
       {chipEtiketler.length > 0 ? (
@@ -80,7 +79,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   btnCompact: { flex: 0.85 },
-  btnText: { fontSize: 12, fontWeight: '600', color: colors.text },
+  btnText: { fontSize: 11, fontWeight: '600', color: colors.text },
   chipSatir: { paddingHorizontal: spacing.sm, paddingBottom: spacing.sm, gap: 8 },
   chip: {
     paddingHorizontal: 12,

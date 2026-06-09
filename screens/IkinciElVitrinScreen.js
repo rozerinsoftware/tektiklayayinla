@@ -2,12 +2,13 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
-  FlatList,
+  ScrollView,
   TouchableOpacity,
   StyleSheet,
   TextInput,
   ActivityIndicator,
   RefreshControl,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +18,11 @@ import { filtreYayindaIlanlar } from '../utils/ilanYardimci';
 import { colors, radius, spacing } from '../constants/theme';
 import IlanVitrinKart from '../components/IlanVitrinKart';
 import { openIlanDetay } from '../utils/navigationHelpers';
+
+const EKRAN_GENISligi = Dimensions.get('window').width;
+const VITRIN_YATAY_PAD = spacing.sm * 2;
+const VITRIN_ARALIK = spacing.sm;
+const VITRIN_HUCRE_GENISligi = (EKRAN_GENISligi - VITRIN_YATAY_PAD - VITRIN_ARALIK) / 2;
 
 export default function IkinciElVitrinScreen({ navigation }) {
   const [ilanlar, setIlanlar] = useState([]);
@@ -122,21 +128,25 @@ export default function IkinciElVitrinScreen({ navigation }) {
           <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 32 }} />
         </View>
       ) : (
-        <FlatList
-          data={ikinciElIlanlar}
-          keyExtractor={(item) => String(item.id)}
-          numColumns={2}
-          columnWrapperStyle={styles.gridRow}
-          ListHeaderComponent={baslik}
-          ListEmptyComponent={bos}
+        <ScrollView
+          style={styles.scrollFlex}
           contentContainerStyle={styles.liste}
+          showsVerticalScrollIndicator
           refreshControl={<RefreshControl refreshing={yukleniyor} onRefresh={yukle} />}
-          renderItem={({ item }) => (
-            <View style={styles.gridHucre}>
-              <IlanVitrinKart ilan={item} onPress={() => openIlanDetay(navigation, item)} />
+        >
+          {baslik()}
+          {ikinciElIlanlar.length === 0 ? (
+            bos()
+          ) : (
+            <View style={styles.vitrinGrid}>
+              {ikinciElIlanlar.map((item) => (
+                <View key={String(item.id)} style={styles.vitrinHucre}>
+                  <IlanVitrinKart ilan={item} onPress={() => openIlanDetay(navigation, item)} />
+                </View>
+              ))}
             </View>
           )}
-        />
+        </ScrollView>
       )}
     </SafeAreaView>
   );
@@ -194,9 +204,10 @@ const styles = StyleSheet.create({
   },
   bolumBaslikText: { fontSize: 15, fontWeight: '700', color: colors.text },
   tumuLink: { fontSize: 14, fontWeight: '600', color: colors.link },
-  liste: { paddingHorizontal: spacing.sm, paddingBottom: 24, flexGrow: 1 },
-  gridRow: { gap: spacing.sm },
-  gridHucre: { flex: 1, maxWidth: '50%' },
+  scrollFlex: { flex: 1 },
+  liste: { paddingHorizontal: spacing.sm, paddingBottom: 32 },
+  vitrinGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: VITRIN_ARALIK },
+  vitrinHucre: { width: VITRIN_HUCRE_GENISligi },
   bos: { alignItems: 'center', paddingTop: 40, paddingHorizontal: 24 },
   bosEmoji: { fontSize: 40, marginBottom: 8 },
   bosMetin: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },

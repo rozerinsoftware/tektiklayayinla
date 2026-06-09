@@ -12,7 +12,7 @@ function withAndroidMapQueries(config) {
           },
           {
             action: [{ $: { 'android:name': 'android.intent.action.VIEW' } }],
-            data: [{ $: { 'android:scheme': 'google.navigation' } }],
+            data: [{ $: { 'android:scheme': 'https' } }],
           },
         ],
       },

@@ -16,8 +16,9 @@ import {
 } from 'firebase/firestore';
 import { getCurrentUserId, getFirebaseAuth, waitForAuth } from './auth';
 import { getDb } from './firebase';
-import { ORNEK_ILANLAR, ORNEK_ESKI_BASLIKLAR } from './constants/ornekIlanlar';
+import { ORNEK_ILANLAR, ORNEK_ESKI_BASLIKLAR, ornekIlanFotograflar } from './constants/ornekIlanlar';
 import { hazirlaIlanFotograflari } from './utils/ilanFotograf';
+import { ornekFotoGuncellenmeli } from './utils/ilanFoto';
 
 const ilanCol = () => collection(getDb(), 'ilanlar');
 const usersCol = () => collection(getDb(), 'users');
@@ -528,16 +529,20 @@ export const adminOrnekIlanlariYukle = async ({ ustuneYaz = false, guncelle = tr
     const batch = writeBatch(db);
     let eklendi = 0;
     let guncellendi = 0;
+    let silindi = 0;
     let fotoTamamlandi = 0;
     const guncellenenRefler = new Set();
+    const gecerliOrnekKeys = new Set(ORNEK_ILANLAR.map((o) => o.ornekKey).filter(Boolean));
 
     for (const ornek of ORNEK_ILANLAR) {
-      const { detay, fotograflar: _atla, ...ust } = ornek;
+      const { detay, ...ust } = ornek;
       const payload = {
         ...ust,
         detay: detay || {},
         ornek: true,
-        fotograflar: [],
+        fotograflar: ornek.fotograflar?.length
+          ? ornek.fotograflar
+          : ornekIlanFotograflar(ornek.ornekKey),
       };
       const mevcutDoc = ornekDocBul(ornek);
 
@@ -559,28 +564,42 @@ export const adminOrnekIlanlariYukle = async ({ ustuneYaz = false, guncelle = tr
       eklendi += 1;
     }
 
-    if (guncelle) {
-      const stokFoto = (url) =>
-        typeof url === 'string' &&
-        (url.includes('picsum.photos') ||
-          url.includes('pexels.com') ||
-          url.includes('unsplash.com') ||
-          url.includes('placehold.co'));
+    for (const docSnap of mevcutOrnek) {
+      const key = docSnap.data()?.ornekKey;
+      if (key && !gecerliOrnekKeys.has(key)) {
+        batch.delete(docSnap.ref);
+        silindi += 1;
+      }
+    }
 
+    if (guncelle) {
       for (const docSnap of mevcutOrnek) {
         if (guncellenenRefler.has(docSnap.ref.path)) continue;
 
         const data = docSnap.data();
         const fotolar = Array.isArray(data?.fotograflar) ? data.fotograflar : [];
-        const stokVar = fotolar.some(stokFoto);
-        if (!stokVar) continue;
+        const bozukFoto = fotolar.length === 0 || fotolar.some(ornekFotoGuncellenmeli);
+        if (!bozukFoto) continue;
 
-        batch.update(docSnap.ref, { fotograflar: [] });
+        const seed =
+          ORNEK_ILANLAR.find((o) => o.ornekKey === data?.ornekKey) ||
+          ORNEK_ILANLAR.find((o) => o.baslik === data?.baslik) ||
+          ORNEK_ILANLAR.find(
+            (o) => ORNEK_ESKI_BASLIKLAR[data?.baslik] && o.ornekKey === ORNEK_ESKI_BASLIKLAR[data?.baslik]
+          );
+        const yeniFoto = seed
+          ? seed.fotograflar?.length
+            ? seed.fotograflar
+            : ornekIlanFotograflar(seed.ornekKey)
+          : [];
+        if (!yeniFoto.length) continue;
+
+        batch.update(docSnap.ref, { fotograflar: yeniFoto });
         fotoTamamlandi += 1;
       }
     }
 
-    if (eklendi === 0 && guncellendi === 0 && fotoTamamlandi === 0) {
+    if (eklendi === 0 && guncellendi === 0 && fotoTamamlandi === 0 && silindi === 0) {
       return {
         eklendi: 0,
         guncellendi: 0,
@@ -594,11 +613,13 @@ export const adminOrnekIlanlariYukle = async ({ ustuneYaz = false, guncelle = tr
 
     const parcalar = [];
     if (guncellendi > 0) parcalar.push(`${guncellendi} ilan güncellendi`);
-    if (fotoTamamlandi > 0) parcalar.push(`${fotoTamamlandi} ilandan stok fotoğraflar temizlendi`);
+    if (fotoTamamlandi > 0) parcalar.push(`${fotoTamamlandi} ilana uygun demo fotoğraf eklendi`);
     if (eklendi > 0) parcalar.push(`${eklendi} yeni ilan eklendi`);
+    if (silindi > 0) parcalar.push(`${silindi} eski örnek ilan kaldırıldı`);
     return {
       eklendi,
       guncellendi,
+      silindi,
       atlandi: false,
       mesaj: parcalar.join(', ') + '. Vitrini yenileyin.',
     };

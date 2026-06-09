@@ -245,7 +245,7 @@ export default function IlanEkleScreen({ navigation, route }) {
                 ))
               : null}
 
-            {secilenKategori?.kategoriKok && konumZorunluMu(secilenKategori.kategoriKok) ? (
+            {secilenKategori?.kategoriKok ? (
               <KonumSecici
                 konum={konum}
                 onKonumChange={setKonum}

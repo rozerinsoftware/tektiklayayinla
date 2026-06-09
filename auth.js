@@ -121,13 +121,25 @@ export function getFirebaseAuth() {
 }
 
 export function getCurrentUser() {
-  const user = getFirebaseAuth().currentUser;
-  if (!user?.emailVerified) return null;
-  return user;
+  try {
+    const user = getFirebaseAuth().currentUser;
+    if (!user) return null;
+    if (!user.emailVerified) return null;
+    return user;
+  } catch {
+    return null;
+  }
 }
 
 export function getCurrentUserId() {
-  return getCurrentUser()?.uid ?? null;
+  try {
+    const user = getFirebaseAuth().currentUser;
+    if (!user || !user.emailVerified) return null;
+    const id = user['uid'];
+    return typeof id === 'string' && id.length > 0 ? id : null;
+  } catch {
+    return null;
+  }
 }
 
 export function waitForAuth() {

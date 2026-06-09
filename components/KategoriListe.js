@@ -88,20 +88,22 @@ export default function KategoriListe({
     );
   };
 
-  if (yukleniyor) {
-    return (
-      <View style={styles.yukleniyor}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
   return (
     <FlatList
       data={bolumler}
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
-      ListHeaderComponent={listeHeader}
+      ListHeaderComponent={
+        <>
+          {listeHeader}
+          {yukleniyor ? (
+            <View style={styles.sayimYukleniyor}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={styles.sayimYukleniyorText}>İlan sayıları güncelleniyor…</Text>
+            </View>
+          ) : null}
+        </>
+      }
       ItemSeparatorComponent={() => <View style={styles.ayrac} />}
       contentContainerStyle={styles.liste}
       style={styles.flex}
@@ -134,7 +136,15 @@ export { getAltBaslikMetni };
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.surface },
   liste: { paddingBottom: 24 },
-  yukleniyor: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  sayimYukleniyor: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.background,
+  },
+  sayimYukleniyorText: { fontSize: 12, color: colors.textMuted },
   satir: {
     flexDirection: 'row',
     alignItems: 'center',

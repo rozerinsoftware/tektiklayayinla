@@ -6,13 +6,22 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Modal,
+  FlatList,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { mevcutKonumuAl, formatKonumEtiket } from '../utils/konum';
+import {
+  mevcutKonumuAl,
+  formatKonumEtiket,
+  KONUM_SECENEKLERI,
+  konumSecenegiOlustur,
+} from '../utils/konum';
 import { colors, radius, spacing } from '../constants/theme';
 
-export default function KonumSecici({ konum, onKonumChange, zorunlu }) {
+export default function KonumSecici({ konum, onKonumChange, zorunlu, aciklama }) {
   const [yukleniyor, setYukleniyor] = useState(false);
+  const [listeAcik, setListeAcik] = useState(false);
 
   const konumIsaretle = async () => {
     try {
@@ -21,10 +30,18 @@ export default function KonumSecici({ konum, onKonumChange, zorunlu }) {
       onKonumChange(yeni);
     } catch (e) {
       onKonumChange(null);
-      Alert.alert('Konum alınamadı', e?.message || 'GPS veya izin kontrol edin.');
+      Alert.alert(
+        'Konum alınamadı',
+        (e?.message || 'GPS veya izin kontrol edin.') + '\n\nListeden il/ilçe seçebilirsiniz.'
+      );
     } finally {
       setYukleniyor(false);
     }
+  };
+
+  const sehirSec = (secenek) => {
+    onKonumChange(konumSecenegiOlustur(secenek));
+    setListeAcik(false);
   };
 
   const etiket = formatKonumEtiket(konum);
@@ -38,7 +55,8 @@ export default function KonumSecici({ konum, onKonumChange, zorunlu }) {
         </Text>
       </View>
       <Text style={styles.aciklama}>
-        Alıcılar ilanın nerede olduğunu görsün. GPS ile bulunduğunuz nokta işaretlenir.
+        {aciklama ||
+          'Alıcılar ilanın nerede olduğunu görsün. GPS ile işaretleyin veya listeden il/ilçe seçin.'}
       </Text>
 
       {etiket ? (
@@ -70,10 +88,19 @@ export default function KonumSecici({ konum, onKonumChange, zorunlu }) {
               color={colors.primaryText}
             />
             <Text style={styles.btnText}>
-              {etiket ? 'Konumu yeniden işaretle' : 'Konumumu işaretle'}
+              {etiket ? 'GPS ile yenile' : 'Konumumu işaretle (GPS)'}
             </Text>
           </>
         )}
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.btnIkincil}
+        onPress={() => setListeAcik(true)}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="list-outline" size={20} color={colors.primary} />
+        <Text style={styles.btnIkincilText}>İl / ilçe seç</Text>
       </TouchableOpacity>
 
       {etiket ? (
@@ -81,6 +108,30 @@ export default function KonumSecici({ konum, onKonumChange, zorunlu }) {
           <Text style={styles.temizleText}>Konumu kaldır</Text>
         </TouchableOpacity>
       ) : null}
+
+      <Modal visible={listeAcik} animationType="slide" transparent onRequestClose={() => setListeAcik(false)}>
+        <Pressable style={styles.modalArka} onPress={() => setListeAcik(false)}>
+          <Pressable style={styles.modalKutu} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalBaslik}>
+              <Text style={styles.modalBaslikText}>İl / ilçe seçin</Text>
+              <TouchableOpacity onPress={() => setListeAcik(false)} hitSlop={8}>
+                <Ionicons name="close" size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={KONUM_SECENEKLERI}
+              keyExtractor={(item) => item.etiket}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.listeSatir} onPress={() => sehirSec(item)} activeOpacity={0.7}>
+                  <Ionicons name="location-outline" size={18} color={colors.primary} />
+                  <Text style={styles.listeMetin}>{item.etiket}</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -124,9 +175,53 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingVertical: 14,
     borderRadius: radius.md,
+    marginBottom: spacing.sm,
   },
   btnDisabled: { opacity: 0.7 },
   btnText: { fontSize: 15, fontWeight: '700', color: colors.primaryText },
+  btnIkincil: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: radius.md,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: colors.surface,
+  },
+  btnIkincilText: { fontSize: 15, fontWeight: '700', color: colors.primary },
   temizle: { alignItems: 'center', marginTop: spacing.sm, padding: spacing.sm },
   temizleText: { fontSize: 14, color: colors.danger, fontWeight: '600' },
+  modalArka: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalKutu: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    maxHeight: '70%',
+    paddingBottom: spacing.lg,
+  },
+  modalBaslik: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalBaslikText: { fontSize: 17, fontWeight: '700', color: colors.text },
+  listeSatir: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 14,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  listeMetin: { flex: 1, fontSize: 15, color: colors.text },
 });

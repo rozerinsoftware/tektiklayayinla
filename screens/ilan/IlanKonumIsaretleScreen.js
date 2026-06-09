@@ -75,7 +75,7 @@ export default function IlanKonumIsaretleScreen({ navigation, route }) {
         )}
         <View style={styles.ipucu}>
           <Text style={styles.ipucuText}>
-            Konumunuzu işaretlemek için aşağıdan GPS kullanın veya yeniden işaretleyin.
+            Aşağıdan GPS ile işaretleyin veya &quot;İl / ilçe seç&quot; ile manuel konum belirleyin.
           </Text>
         </View>
       </View>

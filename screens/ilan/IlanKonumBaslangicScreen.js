@@ -28,6 +28,15 @@ export default function IlanKonumBaslangicScreen({ navigation, route }) {
         <Ionicons name="map-outline" size={64} color={colors.textMuted} style={styles.haritaIcon} />
       </View>
 
+      <View style={styles.aciklamaKutu}>
+        <Text style={styles.aciklamaBaslik}>Neden konum?</Text>
+        <Text style={styles.aciklamaMetin}>
+          {taslakIlan?.kategoriKok === 'ikinci-el'
+            ? '2. el ürünlerde çoğu alıcı elden teslim ister. Buluşma yakınınızı işaretleyin.'
+            : 'Alıcılar ilanın yaklaşık konumunu görsün. Adresin tamamı değil, işaretlediğiniz nokta kaydedilir.'}
+        </Text>
+      </View>
+
       <View style={styles.btnWrap}>
         <TouchableOpacity style={styles.btn} onPress={() => git('gps')} activeOpacity={0.85}>
           <Ionicons name="navigate-outline" size={22} color={colors.primary} />
@@ -52,6 +61,17 @@ const styles = StyleSheet.create({
   },
   haritaOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'transparent' },
   haritaIcon: { opacity: 0.5 },
+  aciklamaKutu: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  aciklamaBaslik: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 4 },
+  aciklamaMetin: { fontSize: 13, color: colors.textSecondary, lineHeight: 19 },
   btnWrap: { padding: spacing.lg, gap: spacing.md, backgroundColor: colors.surface },
   btn: {
     flexDirection: 'row',

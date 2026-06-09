@@ -87,7 +87,7 @@ export default function KategoriAnaScreen({ navigation, route }) {
             <IlanVerKategoriSatiri
               baslik={item.baslik}
               onPress={() =>
-                navigation.push('KategoriDetay', {
+                navigation.navigate('KategoriDetay', {
                   kategoriId: item.id,
                   secimModu: true,
                 })

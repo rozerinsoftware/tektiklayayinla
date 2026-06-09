@@ -155,14 +155,21 @@ export default function KategoriDetayScreen({ navigation, route }) {
     }
     if (secimModu && (cocuk.yaprak || !cocuk.cocuklar?.length)) {
       const alt = cocukBilgi(cocuk);
-      if (alt) {
-        kategoriSecildi({
-          kategoriId: cocuk.id,
-          kategoriYolu: alt.yolIds,
-          kategoriEtiket: alt.etiket,
-          kategoriKok: alt.kokId,
-        });
-      }
+      kategoriSecildi(
+        alt
+          ? {
+              kategoriId: cocuk.id,
+              kategoriYolu: alt.yolIds,
+              kategoriEtiket: alt.etiket,
+              kategoriKok: alt.kokId,
+            }
+          : {
+              kategoriId: cocuk.id,
+              kategoriYolu: cocukYolu(cocuk),
+              kategoriEtiket: `${bilgi.etiket} › ${cocuk.baslik}`,
+              kategoriKok: bilgi.kokId,
+            }
+      );
       return;
     }
     if (cocuk.yaprak || !cocuk.cocuklar?.length) {
@@ -220,7 +227,7 @@ export default function KategoriDetayScreen({ navigation, route }) {
           kok ? (
             <View style={styles.yol}>
               <Text style={styles.yolText} numberOfLines={1}>
-                {bilgi.yolBaslik.join(' › ')}
+                {(bilgi.yolBaslik || []).join(' › ')}
               </Text>
             </View>
           ) : null

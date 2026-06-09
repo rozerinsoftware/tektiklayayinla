@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow, getKategoriMeta, formatFiyat } from '../constants/theme';
 import { kokIdToMetaKey } from '../constants/kategoriler';
 import { formatKonumEtiket } from '../utils/konum';
-import { gecerliKapakFoto } from '../utils/ilanFoto';
+import { ilanKapakFotoUrl, ILAN_FOTO_HEADERS } from '../utils/ilanFoto';
 
 export default function IlanKart({ ilan, onPress, onSil, compact }) {
   const metaKey = ilan.kategoriKok
@@ -18,7 +18,7 @@ export default function IlanKart({ ilan, onPress, onSil, compact }) {
     : ilan.platformlar
       ? [ilan.platformlar]
       : [];
-  const kapakFoto = gecerliKapakFoto(ilan.fotograflar);
+  const kapakFoto = ilanKapakFotoUrl(ilan);
 
   return (
     <TouchableOpacity
@@ -28,7 +28,7 @@ export default function IlanKart({ ilan, onPress, onSil, compact }) {
     >
       <View style={[styles.gorselAlan, { backgroundColor: meta.bg }]}>
         {kapakFoto ? (
-          <Image source={{ uri: kapakFoto }} style={styles.kapakFoto} />
+          <Image source={{ uri: kapakFoto, headers: ILAN_FOTO_HEADERS }} style={styles.kapakFoto} />
         ) : (
           <Text style={styles.gorselEmoji}>{meta.emoji}</Text>
         )}
