@@ -74,12 +74,29 @@ export async function mevcutKonumuAl() {
     throw new Error('Konum izni verilmedi. Ayarlardan izin verin veya listeden il/ilçe seçin.');
   }
 
+  const servisAcik = await Location.hasServicesEnabledAsync();
+  if (!servisAcik) {
+    try {
+      await Location.enableNetworkProviderAsync();
+    } catch {
+      throw new Error(
+        'Cihazın konum (GPS) servisi kapalı. Lütfen konumu açın veya listeden il/ilçe seçin.'
+      );
+    }
+  }
+
   let pos = await Location.getLastKnownPositionAsync();
   if (!pos) {
-    pos = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-      timeout: 12000,
-    });
+    try {
+      pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+        timeout: 12000,
+      });
+    } catch {
+      pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Lowest,
+      });
+    }
   }
 
   const coords = {

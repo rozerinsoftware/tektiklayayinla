@@ -73,10 +73,15 @@ export async function getOrCreateKonusma({ ilanId, ilanBaslik, ownerId }) {
 
   const id = konusmaIdOlustur(ilanId, uid, ownerId);
   const ref = doc(getDb(), 'konusmalar', id);
-  const snap = await getDoc(ref);
 
-  if (snap.exists()) {
-    return docToKonusma(snap, uid);
+  // Sohbet henüz yokken okuma kuralı (resource null) reddedebilir; bunu "yok" kabul edip oluştururuz.
+  try {
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      return docToKonusma(snap, uid);
+    }
+  } catch (e) {
+    /* yeni sohbet: var olmayan belge okuması engellenebilir, oluşturmaya devam */
   }
 
   const [benimAd, sahipAd] = await Promise.all([kullaniciAdiAl(uid), kullaniciAdiAl(ownerId)]);

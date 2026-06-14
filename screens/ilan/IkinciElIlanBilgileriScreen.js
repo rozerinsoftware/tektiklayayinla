@@ -11,6 +11,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import IlanBreadcrumb from '../../components/ilan/IlanBreadcrumb';
+import SecenekSecModal from '../../components/ilan/SecenekSecModal';
 import { AppInput, PrimaryButton } from '../../components/ui';
 import { colors, spacing, radius } from '../../constants/theme';
 import { kokIdToMetaKey } from '../../constants/kategoriler';
@@ -29,6 +30,7 @@ export default function IkinciElIlanBilgileriScreen({ navigation, route }) {
   const [iletisim, setIletisim] = useState(taslakIlan?.iletisimSecenekleri || 'Telefon ve Soru Cevap');
   const [fotograflar, setFotograflar] = useState(taslakIlan?.fotograflar || []);
   const [kurallar, setKurallar] = useState(false);
+  const [iletisimAcik, setIletisimAcik] = useState(false);
 
   const fotoEkle = async () => {
     if (fotograflar.length >= 10) {
@@ -41,7 +43,7 @@ export default function IkinciElIlanBilgileriScreen({ navigation, route }) {
       return;
     }
     const sonuc = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       quality: 0.8,
     });
     if (!sonuc.canceled && sonuc.assets?.[0]?.uri) {
@@ -117,15 +119,7 @@ export default function IkinciElIlanBilgileriScreen({ navigation, route }) {
         aciklama="Elden teslim için alıcıyla buluşacağınız yakını işaretleyin. GPS ile konumunuz kaydedilir."
       />
 
-      <TouchableOpacity
-        style={styles.secimSatir}
-        onPress={() =>
-          Alert.alert('İletişim', '', [
-            ...ILETISIM_SECENEKLERI.map((s) => ({ text: s, onPress: () => setIletisim(s) })),
-            { text: 'İptal', style: 'cancel' },
-          ])
-        }
-      >
+      <TouchableOpacity style={styles.secimSatir} onPress={() => setIletisimAcik(true)}>
         <Text style={styles.secimLabel}>İletişim Seçenekleri</Text>
         <Text style={styles.secimDeger}>{iletisim}</Text>
         <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
@@ -141,6 +135,18 @@ export default function IkinciElIlanBilgileriScreen({ navigation, route }) {
       </TouchableOpacity>
 
       <PrimaryButton title="Devam Et" icon="arrow-forward" onPress={devamEt} />
+
+      <SecenekSecModal
+        gorunur={iletisimAcik}
+        baslik="İletişim Seçenekleri"
+        secenekler={ILETISIM_SECENEKLERI}
+        seciliDeger={iletisim}
+        onSec={(val) => {
+          setIletisim(val);
+          setIletisimAcik(false);
+        }}
+        onKapat={() => setIletisimAcik(false)}
+      />
     </ScrollView>
   );
 }

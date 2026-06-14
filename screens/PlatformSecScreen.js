@@ -11,12 +11,28 @@ const PLATFORMLAR = [
   { isim: 'Arabam.com', renk: '#FF4500', logo: require('../assets/arabamcom.png') },
   { isim: 'Letgo', renk: '#6C5CE7', logo: require('../assets/letgo.png') },
   { isim: 'Emlakjet', renk: '#FF6B35', logo: require('../assets/emlakjet.png') },
+  { isim: 'Hepsiemlak', renk: '#E5004B', logo: require('../assets/hepsiemlak.png') },
 ];
 
+/** Kategoriye göre önerilen platformlar (kullanıcı isterse değiştirebilir). */
+const ONERILEN_PLATFORMLAR = {
+  emlak: ['Sahibinden', 'Emlakjet', 'Hepsiemlak'],
+  vasita: ['Sahibinden', 'Arabam.com'],
+  'ikinci-el': ['Sahibinden', 'Letgo'],
+  'is-makineleri': ['Sahibinden', 'Arabam.com'],
+  hizmet: ['Sahibinden', 'Letgo'],
+};
+
+function onerilenPlatformlar(kategoriKok) {
+  return ONERILEN_PLATFORMLAR[kategoriKok] || ['Sahibinden'];
+}
+
 export default function PlatformSecScreen({ navigation, route }) {
-  const [secilenler, setSecilenler] = useState([]);
-  const [yayinlaniyor, setYayinlaniyor] = useState(false);
   const { yeniIlan, duzenlemeId } = route.params;
+  const onerilenler = onerilenPlatformlar(yeniIlan?.kategoriKok);
+  const gosterilecekPlatformlar = PLATFORMLAR.filter((p) => onerilenler.includes(p.isim));
+  const [secilenler, setSecilenler] = useState(onerilenler);
+  const [yayinlaniyor, setYayinlaniyor] = useState(false);
 
   const platformSec = (platform) => {
     setSecilenler((prev) =>
@@ -86,11 +102,12 @@ export default function PlatformSecScreen({ navigation, route }) {
       <SectionTitle
         icon="globe-outline"
         title="Platform Seçin"
-        subtitle="İlanınızı yayınlamak istediğiniz siteleri işaretleyin"
+        subtitle="İlan türünüze göre önerilenler seçildi. İsterseniz değiştirebilirsiniz."
       />
 
-      {PLATFORMLAR.map((platform) => {
+      {gosterilecekPlatformlar.map((platform) => {
         const secili = secilenler.includes(platform.isim);
+        const onerilen = onerilenler.includes(platform.isim);
         return (
           <TouchableOpacity
             key={platform.isim}
@@ -99,7 +116,14 @@ export default function PlatformSecScreen({ navigation, route }) {
             activeOpacity={0.85}
           >
             <Image source={platform.logo} style={styles.logo} resizeMode="contain" />
-            <Text style={styles.platformText}>{platform.isim}</Text>
+            <View style={styles.platformTextSatir}>
+              <Text style={styles.platformText}>{platform.isim}</Text>
+              {onerilen ? (
+                <View style={styles.onerilenRozet}>
+                  <Text style={styles.onerilenRozetText}>Önerilen</Text>
+                </View>
+              ) : null}
+            </View>
             <View style={[styles.checkKutu, secili && { backgroundColor: platform.renk }]}>
               <Ionicons
                 name={secili ? 'checkmark' : 'ellipse-outline'}
@@ -137,7 +161,17 @@ const styles = StyleSheet.create({
     ...shadow.card,
   },
   logo: { width: 48, height: 48, marginRight: spacing.md, borderRadius: radius.sm },
-  platformText: { fontSize: 16, fontWeight: '700', flex: 1, color: colors.text },
+  platformTextSatir: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  platformText: { fontSize: 16, fontWeight: '700', color: colors.text },
+  onerilenRozet: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+  },
+  onerilenRozetText: { fontSize: 11, fontWeight: '600', color: colors.textSecondary },
   checkKutu: {
     width: 32,
     height: 32,

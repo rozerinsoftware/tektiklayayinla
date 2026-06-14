@@ -14,7 +14,7 @@ import { adminUpdateIlan } from '../api';
 import { AppInput, PrimaryButton, SectionTitle } from '../components/ui';
 import { colors, radius, shadow, spacing, getKategoriMeta } from '../constants/theme';
 
-const KATEGORILER = ['Emlak', 'Araç', 'İkinci El'];
+const KATEGORILER = ['Emlak', 'Araç', 'İkinci El', 'İş Makineleri'];
 
 const KATEGORI_ALANLARI = {
   Emlak: [
@@ -39,6 +39,12 @@ const KATEGORI_ALANLARI = {
     { key: 'marka', label: 'Marka', placeholder: 'Apple', icon: 'business-outline' },
     { key: 'durum', label: 'Durum', placeholder: 'İyi', icon: 'star-outline' },
   ],
+  'İş Makineleri': [
+    { key: 'marka', label: 'Marka', placeholder: 'Caterpillar', icon: 'business-outline' },
+    { key: 'model', label: 'Model', placeholder: '320', icon: 'construct-outline' },
+    { key: 'yil', label: 'Yıl', placeholder: '2018', keyboard: 'numeric', icon: 'calendar-outline' },
+    { key: 'calismaSaati', label: 'Çalışma Saati', placeholder: '6800', keyboard: 'numeric', icon: 'time-outline' },
+  ],
 };
 
 const PLATFORMLAR = ['Sahibinden', 'Arabam.com', 'Letgo', 'Emlakjet'];
@@ -47,8 +53,9 @@ function ekstraAlanlariCikar(ilan) {
   const alanlar = {};
   if (!ilan?.kategori) return alanlar;
   (KATEGORI_ALANLARI[ilan.kategori] || []).forEach((a) => {
-    if (ilan[a.key] != null && ilan[a.key] !== '') {
-      alanlar[a.key] = String(ilan[a.key]);
+    const deger = ilan[a.key] ?? ilan.detay?.[a.key];
+    if (deger != null && deger !== '') {
+      alanlar[a.key] = String(deger);
     }
   });
   return alanlar;
@@ -209,7 +216,7 @@ export default function AdminIlanDuzenleScreen({ navigation, route }) {
               })}
             </View>
 
-            {KATEGORI_ALANLARI[kategori].map((alan) => (
+            {(KATEGORI_ALANLARI[kategori] || []).map((alan) => (
               <AppInput
                 key={alan.key}
                 label={alan.label}

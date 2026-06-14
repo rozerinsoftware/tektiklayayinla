@@ -14,6 +14,7 @@ import { AppInput, PrimaryButton } from '../../components/ui';
 import IlanBreadcrumb from '../../components/ilan/IlanBreadcrumb';
 import IlanAlanSatiri from '../../components/ilan/IlanAlanSatiri';
 import IlanFotografSec from '../../components/ilan/IlanFotografSec';
+import SecenekSecModal from '../../components/ilan/SecenekSecModal';
 import { colors, spacing, radius, shadow } from '../../constants/theme';
 import { kokIdToMetaKey } from '../../constants/kategoriler';
 import {
@@ -43,6 +44,7 @@ export default function IsMakineleriTemelBilgiScreen({ navigation, route }) {
   });
   const [hatalar, setHatalar] = useState({});
   const [fotograflar, setFotograflar] = useState([]);
+  const [secModal, setSecModal] = useState(null);
 
   const fiyatGuncelle = (text) => {
     if (/[a-zA-ZğüşıöçĞÜŞİÖÇ]/.test(text)) {
@@ -53,21 +55,12 @@ export default function IsMakineleriTemelBilgiScreen({ navigation, route }) {
 
   const alanSec = useCallback((key, deger, alanDef) => {
     if (alanDef?.tip === 'select') {
-      Alert.alert(
-        alanDef.label,
-        '',
-        [
-          ...alanDef.secenekler.map((s) => ({
-            text: s,
-            onPress: () => {
-              setAlanDegerleri((prev) => ({ ...prev, [key]: s }));
-              setHatalar((prev) => ({ ...prev, [key]: false }));
-            },
-          })),
-          { text: 'İptal', style: 'cancel' },
-        ],
-        { cancelable: true }
-      );
+      const secenekler = Array.isArray(alanDef.secenekler) ? alanDef.secenekler : [];
+      if (!secenekler.length) {
+        Alert.alert(alanDef.label, 'Seçenek bulunamadı.');
+        return;
+      }
+      setSecModal({ key, baslik: alanDef.label, secenekler });
       return;
     }
     setAlanDegerleri((prev) => ({ ...prev, [key]: deger }));
@@ -176,6 +169,19 @@ export default function IsMakineleriTemelBilgiScreen({ navigation, route }) {
           <PrimaryButton title="Devam Et" icon="arrow-forward" onPress={devamEt} />
         </View>
       </ScrollView>
+
+      <SecenekSecModal
+        gorunur={!!secModal}
+        baslik={secModal?.baslik}
+        secenekler={secModal?.secenekler || []}
+        seciliDeger={secModal ? alanDegerleri[secModal.key] : null}
+        onSec={(val) => {
+          setAlanDegerleri((prev) => ({ ...prev, [secModal.key]: val }));
+          setHatalar((prev) => ({ ...prev, [secModal.key]: false }));
+          setSecModal(null);
+        }}
+        onKapat={() => setSecModal(null)}
+      />
     </KeyboardAvoidingView>
   );
 }

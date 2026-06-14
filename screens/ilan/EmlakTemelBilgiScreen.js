@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppInput, PrimaryButton } from '../../components/ui';
 import IlanBreadcrumb from '../../components/ilan/IlanBreadcrumb';
 import IlanFotografSec from '../../components/ilan/IlanFotografSec';
+import SecenekSecModal from '../../components/ilan/SecenekSecModal';
 import { colors, spacing, radius, shadow } from '../../constants/theme';
 import { kokIdToMetaKey } from '../../constants/kategoriler';
 import {
@@ -72,6 +73,7 @@ export default function EmlakTemelBilgiScreen({ navigation, route }) {
   });
   const [hatalar, setHatalar] = useState({});
   const [fotograflar, setFotograflar] = useState([]);
+  const [secModal, setSecModal] = useState(null);
 
   const fiyatGuncelle = (text) => {
     if (/[a-zA-ZğüşıöçĞÜŞİÖÇ]/.test(text)) {
@@ -87,21 +89,7 @@ export default function EmlakTemelBilgiScreen({ navigation, route }) {
         Alert.alert(alanDef.label, 'Seçenek bulunamadı.');
         return;
       }
-      Alert.alert(
-        alanDef.label,
-        '',
-        [
-          ...secenekler.map((s) => ({
-            text: s,
-            onPress: () => {
-              setAlanDegerleri((prev) => ({ ...prev, [key]: s }));
-              setHatalar((prev) => ({ ...prev, [key]: false }));
-            },
-          })),
-          { text: 'İptal', style: 'cancel' },
-        ],
-        { cancelable: true }
-      );
+      setSecModal({ key, baslik: alanDef.label, secenekler });
       return;
     }
     setAlanDegerleri((prev) => ({ ...prev, [key]: deger }));
@@ -210,6 +198,19 @@ export default function EmlakTemelBilgiScreen({ navigation, route }) {
           <PrimaryButton title="Devam Et" icon="arrow-forward" onPress={devamEt} />
         </View>
       </ScrollView>
+
+      <SecenekSecModal
+        gorunur={!!secModal}
+        baslik={secModal?.baslik}
+        secenekler={secModal?.secenekler || []}
+        seciliDeger={secModal ? alanDegerleri[secModal.key] : null}
+        onSec={(val) => {
+          setAlanDegerleri((prev) => ({ ...prev, [secModal.key]: val }));
+          setHatalar((prev) => ({ ...prev, [secModal.key]: false }));
+          setSecModal(null);
+        }}
+        onKapat={() => setSecModal(null)}
+      />
     </KeyboardAvoidingView>
   );
 }

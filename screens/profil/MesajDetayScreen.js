@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { getCurrentUserId } from '../../auth';
 import { dinleMesajlar, mesajGonder, konusmaOkunduIsaretle } from '../../api/mesajlar';
 import { colors, radius, spacing } from '../../constants/theme';
@@ -24,6 +25,7 @@ function formatSaat(ts) {
 export default function MesajDetayScreen({ navigation, route }) {
   const { konusmaId, ilanBaslik, karsiAd } = route.params || {};
   const uid = getCurrentUserId();
+  const headerHeight = useHeaderHeight();
   const [mesajlar, setMesajlar] = useState([]);
   const [metin, setMetin] = useState('');
   const [gonderiliyor, setGonderiliyor] = useState(false);
@@ -77,8 +79,8 @@ export default function MesajDetayScreen({ navigation, route }) {
   return (
     <KeyboardAvoidingView
       style={styles.wrap}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={90}
+      behavior="padding"
+      keyboardVerticalOffset={headerHeight}
     >
       {ilanBaslik ? (
         <TouchableOpacity
@@ -114,6 +116,13 @@ export default function MesajDetayScreen({ navigation, route }) {
           onChangeText={setMetin}
           multiline
           maxLength={2000}
+          autoCorrect={false}
+          spellCheck={false}
+          autoComplete="off"
+          autoCapitalize="sentences"
+          keyboardType="default"
+          textContentType="none"
+          importantForAutofill="no"
         />
         <TouchableOpacity
           style={[styles.gonderBtn, (!metin.trim() || gonderiliyor) && styles.gonderBtnPasif]}

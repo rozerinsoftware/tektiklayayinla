@@ -7,7 +7,7 @@ import { ilanKapakFotoUrl, ILAN_FOTO_HEADERS } from '../utils/ilanFoto';
 import {
   ilanKonumKisa,
   ilanVitrinRozet,
-  ilanVitrinOzetMetni,
+  ilanVitrinOzellikleri,
 } from '../utils/ilanKartOzet';
 
 /** Sahibinden vitrin — 2 sütun grid kartı */
@@ -16,7 +16,7 @@ export default function IlanVitrinKart({ ilan, onPress, onSil }) {
   const meta = getKategoriMeta(metaKey);
   const kapakFoto = ilanKapakFotoUrl(ilan);
   const konum = ilanKonumKisa(ilan);
-  const ozet = ilanVitrinOzetMetni(ilan);
+  const ozellikler = ilanVitrinOzellikleri(ilan).slice(0, 3);
   const rozet = ilanVitrinRozet(ilan);
 
   return (
@@ -54,10 +54,16 @@ export default function IlanVitrinKart({ ilan, onPress, onSil }) {
           {ilan.baslik || 'İlan'}
         </Text>
 
-        {ozet ? (
-          <Text style={styles.ozet} numberOfLines={1}>
-            {ozet}
-          </Text>
+        {ozellikler.length > 0 ? (
+          <View style={styles.ozellikSatir}>
+            {ozellikler.map((o, i) => (
+              <View key={`${o}-${i}`} style={styles.ozellikCip}>
+                <Text style={styles.ozellikText} numberOfLines={1}>
+                  {o}
+                </Text>
+              </View>
+            ))}
+          </View>
         ) : null}
 
         <Text style={styles.fiyat}>{formatFiyat(ilan.fiyat)}</Text>
@@ -119,17 +125,26 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     minHeight: 34,
   },
-  ozet: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 3,
-    fontWeight: '500',
+  ozellikSatir: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginTop: 5,
   },
+  ozellikCip: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+  },
+  ozellikText: { fontSize: 10, color: colors.textSecondary, fontWeight: '600' },
   fiyat: {
     fontSize: 15,
     fontWeight: '800',
     color: colors.link,
-    marginTop: 5,
+    marginTop: 6,
   },
   sil: {
     position: 'absolute',
