@@ -124,7 +124,10 @@ export function dinleKonusmalar(onData, onError) {
       unsub = onSnapshot(
         q,
         (snap) => {
-          const liste = snap.docs.map((d) => docToKonusma(d, uid));
+          const liste = snap.docs
+            .map((d) => docToKonusma(d, uid))
+            // Henüz hiç mesaj gönderilmemiş (sadece açılıp bırakılmış) sohbetleri gizle.
+            .filter((k) => k.sonMesaj && k.sonGonderenId);
           onData(liste);
         },
         (err) => onError?.(err)
