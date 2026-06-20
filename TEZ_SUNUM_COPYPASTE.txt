@@ -1,0 +1,396 @@
+MOBİL TABANLI ÇOK KATEGORİLİ
+İLAN YÖNETİM SİSTEMİ
+(TekTıklaYayınla)
+
+Bitirme Projesi Tezi
+
+Esma Rozerin Beyazit
+Yazılım Mühendisliği Bölümü
+
+Danışman: Dr. Öğr. Üyesi Serkan Gönen
+22 Haziran 2026
+
+📌 Arka plan: uygulamadan bulanık ekran görüntüsü
+
+
+─────────────────────────────────────
+
+
+Problem Tanımı
+
+• Aynı ilanın farklı platformlara tekrar tekrar girilmesi gerekmektedir.
+• Sahibinden, Arabam.com, Letgo, Emlakjet, Hepsiemlak — her biri farklı arayüz ve süreç.
+• Platformlar arasında geçiş zaman kaybına ve ilan tutarsızlığına neden olmaktadır.
+• İlan yönetimi ve güncelleme süreci kullanıcı açısından zorlaşmaktadır.
+
+Amaç:
+İlan yönetim sürecini tek mobil uygulama üzerinden merkezi ve düzenli hâle getirmek.
+
+📌 Sağ tarafa platform logoları koy
+
+
+─────────────────────────────────────
+
+
+Projenin Amacı ve Kapsamı
+
+TekTıklaYayınla;
+
+✓ İlan oluşturma
+✓ Fotoğraf yükleme (max 10)
+✓ Konum işaretleme (GPS)
+✓ Platform seçimi ve yayın simülasyonu
+✓ Mesajlaşma
+✓ İlan yönetimi (listeleme, filtreleme, favori)
+
+işlemlerini tek mobil uygulama üzerinden gerçekleştirebilen bir sistem olarak geliştirilmiştir.
+
+Desteklenen kategoriler:
+• Emlak
+• Vasıta
+• İkinci El
+• İş Makinesi
+
+
+─────────────────────────────────────
+
+
+Literatür Özeti
+
+İncelenen konular:
+
+• Çapraz platform mobil geliştirme (React Native)
+• Bulut tabanlı backend sistemleri (Firebase BaaS)
+• NoSQL veritabanı yapıları (Cloud Firestore)
+• Mobil güvenlik mimarileri (OWASP MASVS)
+• Kullanıcı deneyimi yaklaşımları
+
+Bu doğrultuda literatürdeki bulgular projenin teknoloji ve güvenlik tercihlerine temel oluşturmuştur.
+
+
+─────────────────────────────────────
+
+
+Kullanılan Teknolojiler
+
+React Native → Mobil arayüz (Android)
+Expo → Geliştirme ve test ortamı
+Firebase Authentication → Kayıt, giriş, e-posta doğrulama
+Cloud Firestore → İlan, profil, mesaj veritabanı
+Cloudinary → İlan fotoğraf depolama
+AsyncStorage → Favoriler ve ayarlar (cihazda)
+Expo Location → GPS konum
+React Navigation → Ekran geçişleri
+
+📌 Teknoloji logoları koy (isteğe bağlı)
+
+
+─────────────────────────────────────
+
+
+Sistem Mimarisi
+
+Mobil Uygulama
+(React Native + Expo)
+↓
+Firebase Authentication
+↓
+Cloud Firestore
+↓
+Cloudinary
+↓
+Platform Simülasyonu
+
+BaaS mimarisi tercih edilmiş olup ayrı bir backend sunucusu kullanılmamıştır.
+
+📌 Mimari şekil koy (tezden Şekil 2.1)
+
+
+─────────────────────────────────────
+
+
+Uygulama Akışı
+
+Kayıt
+↓
+E-posta Doğrulama
+↓
+Giriş
+↓
+İlan Oluşturma (kategori seç)
+↓
+Fotoğraf Yükleme
+↓
+Konum Seçimi
+↓
+Platform Seçimi
+↓
+Yayın Süreci Simülasyonu
+
+📌 Akış diyagramı koy (tezden Şekil 2.2)
+
+
+─────────────────────────────────────
+
+
+Veritabanı ve Veri Yapısı
+
+Firestore koleksiyonları:
+
+• users → profil bilgileri, rol (user / admin)
+• ilanlar → tüm ilan verileri
+• konusmalar → mesajlaşma oturumları
+• konusmalar/{id}/mesajlar → mesaj içerikleri
+
+Veri nereye gidiyor?
+
+E-posta + şifre → Firebase Authentication
+Profil (ad, telefon, rol) → Firestore / users
+İlan verileri → Firestore / ilanlar
+Mesajlar → Firestore / konusmalar
+İlan fotoğrafları → Cloudinary (Firestore'da sadece URL)
+Favoriler ve ayarlar → AsyncStorage (telefonda, buluta gitmez)
+
+Her veri hassasiyetine göre farklı katmanda tutulur.
+
+📌 ER diyagramı + veri tablosu koy (tezden Şekil 2.3)
+
+
+─────────────────────────────────────
+
+
+Güvenlik Mimarisi
+
+Katman 1 — Kimlik Doğrulama (Firebase Auth)
+• Şifreler hash'lenir, düz metin hiçbir yerde tutulmaz
+• Uygulama bile kimsenin şifresini göremez
+
+Katman 2 — E-posta Doğrulama
+• Doğrulanmamış hesap giriş yapamaz ve ilan veremez
+• Sahte / bot hesaplarını engeller
+
+Katman 3 — Firestore Güvenlik Kuralları (sunucu tarafı)
+• İlan okuma → herkese açık (vitrin)
+• İlan yazma → giriş + e-posta doğrulanmış
+• İlan silme/güncelleme → yalnızca sahibi veya admin
+• Mesaj → yalnızca sohbetin 2 tarafı
+• Admin → role: 'admin' zorunlu
+
+Katman 4 — Depolama Kuralları
+• Max 10 MB, yalnızca resim dosyası
+
+Güvenlik istemci + sunucu tarafında birlikte uygulanır.
+Kurallar deploy edilmiştir; uygulama hack'lense bile yetkisiz işlem reddedilir.
+
+📌 Kilit ikonu + Kural | Açıklama tablosu koy
+
+
+─────────────────────────────────────
+
+
+Uygulama Ekranları
+
+Geliştirilen ekranlar:
+
+✓ Kullanıcı kayıt ve giriş
+✓ Ana sayfa vitrini
+✓ İlan oluşturma (kategoriye özel formlar)
+✓ Profil ve mesajlaşma
+
+Temel özellikler:
+
+• Kategoriye özel form alanları
+• Maksimum 10 fotoğraf yükleme
+• GPS ile konum seçimi
+• Filtreleme ve sıralama
+• Admin paneli (demo ilan yükleme)
+
+📌 4 ekran görüntüsü koy
+
+
+─────────────────────────────────────
+
+
+Uygulama Gösterimi
+
+DEMO
+
+Gösterilecek akış:
+
+Giriş
+→ İlan Oluşturma
+→ Fotoğraf
+→ Konum
+→ Platform Seçimi
+→ Vitrin
+→ Mesajlaşma
+→ Admin Paneli
+
+📌 Demo videosunu buraya ekle
+
+
+─────────────────────────────────────
+
+
+Sonuçlar
+
+TekTıklaYayınla;
+
+• İlan oluşturma ve yönetim sürecini tek mobil uygulama altında toplamayı amaçlayan işlevsel bir prototip olarak geliştirilmiştir.
+• Dört kategorili ilan sistemi ve kategoriye özel form yapısı uygulanmıştır.
+• Firebase tabanlı güvenli kimlik doğrulama ve Firestore güvenlik kuralları deploy edilmiştir.
+• Çoklu platform yayını simülasyon ile modellenmiş; mimari ileride gerçek API'ye uyarlanabilir şekilde tasarlanmıştır.
+
+
+─────────────────────────────────────
+
+
+Kısıtlar ve Geliştirilebilir Yönler
+
+Kısıtlar:
+• Gerçek API entegrasyonu bulunmamaktadır (ticari kısıt).
+• Yayın süreci simülasyon ile modellenmiştir.
+• Android odaklı geliştirilmiştir (React Native çapraz platformdur).
+• Push bildirimi bulunmamaktadır.
+• KVKK uyumu prototip aşamasında değerlendirilmiştir.
+
+Gelecek Çalışmalar:
+• Gerçek platform API entegrasyonu
+• iOS desteği
+• Push bildirimleri (Firebase Cloud Messaging)
+• Gelişmiş arama
+• KVKK uyumu (canlı ortam için)
+
+
+─────────────────────────────────────
+
+
+Teşekkür ederim.
+
+Sorularınızı alabilirim.
+
+📌 Arka plan: uygulamanın ana ekranı
+
+
+─────────────────────────────────────
+
+
+DEMO VİDEO — BÖYLE ÇEK
+
+1. Açılış
+2. Kayıt / Giriş (e-posta doğrulama göster)
+3. Ana ekran (vitrin)
+4. İlan ver → kategori seç
+5. Form doldur
+6. Fotoğraf ekle
+7. Konum seç
+8. Platform seç
+9. İlan oluştur
+10. Vitrinde göster
+11. İlan detay
+12. Mesaj gönder
+13. Profil / Favori
+14. Admin panel (demo ilanlar)
+15. Çıkış
+
+
+─────────────────────────────────────
+
+
+JÜRİDE SÖYLE — BUNLARI SLAYTA YAZMA
+(Hoca sorarsa ağzından çıkacak cevaplar)
+
+
+S: Veriler nerede saklanıyor?
+
+C: Hassasiyetine göre dört katmanda tutuyorum.
+Şifre → Firebase Authentication'da hash'li.
+Profil, ilan ve mesaj → Cloud Firestore'da.
+Fotoğraflar → Cloudinary'de; Firestore'da sadece URL var.
+Favoriler ve ayarlar → kullanıcının telefonunda AsyncStorage'da; buluta gitmiyor.
+
+
+S: Güvenlik nasıl sağlanıyor?
+
+C: Dört katmanlı yaklaşım kullandım.
+Birincisi Firebase Authentication — şifre hash'li.
+İkincisi e-posta doğrulama zorunluluğu.
+Üçüncüsü Firestore güvenlik kuralları — sunucu tarafında çalışıyor, deploy edildi.
+Dördüncüsü depolama kuralları — sadece resim, max 10 MB.
+Asıl koruma uygulamada değil, sunucu kurallarında.
+
+
+S: Şifreler güvenli mi?
+
+C: Evet. Firebase tarafında hash'lenerek saklanıyor.
+Düz metin şifre hiçbir yerde tutulmuyor.
+Uygulama bile kullanıcının şifresini göremez.
+
+
+S: Biri başkasının ilanını silebilir mi?
+
+C: Hayır. Uygulamada buton gizli olsa bile
+asıl kontrol Firestore kuralında.
+Silme isteğini sunucu alır, isteği yapan kişi
+ilan sahibi mi veya admin mi diye bakar; değilse reddeder.
+
+
+S: Biri uygulamayı hack'lerse veriye erişir mi?
+
+C: Yetkisiz işlem yine reddedilir.
+Firestore kuralları Google sunucusunda çalışır.
+Uygulama kodu değiştirilse bile kurallar geçerli kalır.
+
+
+S: E-posta doğrulama neden zorunlu?
+
+C: Sahte ve bot hesaplarını engellemek için.
+Doğrulanmamış kullanıcı giriş yapamaz ve ilan veremez.
+Kontrol hem uygulamada hem Firestore kurallarında — çift katman.
+
+
+S: Admin nasıl belirleniyor?
+
+C: Firestore'da users koleksiyonunda
+o kullanıcının kaydında role: 'admin' yazıyorsa admin olur.
+Kontrol sunucu kuralında yapılır.
+
+
+S: Fotoğraf neden Firestore'da değil Cloudinary'de?
+
+C: Veritabanını şişirmemek ve fotoğrafı optimize edip hızlı sunmak için.
+Firestore'da yalnızca fotoğrafın URL'si tutulur.
+
+
+S: Favoriler neden telefonda?
+
+C: Tamamen kişisel tercih oldukları için buluta göndermeye gerek yok.
+Gizlilik ve sadelik açısından AsyncStorage'da tutuluyor.
+
+
+S: Neden kendi sunucun yok, Firebase?
+
+C: BaaS mimarisi sunucu kurma ve bakım yükünü kaldırıyor.
+Güvenlik ve ölçeklenmeyi Google sağlıyor;
+ben mobil uygulama ve iş mantığına odaklandım.
+
+
+S: NoSQL / Firestore nedir?
+
+C: İlişkisel SQL veritabanı değil; belge tabanlı NoSQL veritabanı.
+Her ilan JSON benzeri bir belge olarak saklanır.
+Emlakta oda sayısı, arabada kilometre gibi farklı alanlar
+aynı sistemde esnek şekilde tutulabilir.
+
+
+S: Çoklu platform gerçekten yayınlıyor mu?
+
+C: Hayır, simülasyon. Sahibinden, Arabam gibi platformların
+dışa açık API'si yok; ticari kısıt.
+Mimariyi ileride gerçek entegrasyona uygun tasarladım.
+
+
+S: Projeyi bir cümlede anlat.
+
+C: İlan vermenin tekrarlı sürecini tek mobil uygulamada toplayan,
+dört kategoride ilan yönetimi sunan güvenli bir prototip.

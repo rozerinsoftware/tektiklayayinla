@@ -8,12 +8,14 @@ import {
   RefreshControl,
   TouchableOpacity,
   TextInput,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { getIlanlar } from '../../api';
 import { colors, spacing, radius, formatFiyat } from '../../constants/theme';
 import { ilanYayinda, ilanBitisTarihi, formatIlanTarih } from '../../utils/ilanYardimci';
+import { ilanKapakFotoUrl, ILAN_FOTO_HEADERS } from '../../utils/ilanFoto';
 
 export default function KullaniciIlanlarScreen({ navigation, route }) {
   const mod = route.params?.mod || 'yayinda';
@@ -88,14 +90,23 @@ export default function KullaniciIlanlarScreen({ navigation, route }) {
           <Text style={styles.bosMetin}>{bosMetin}</Text>
         </View>
       }
-      renderItem={({ item }) => (
+      renderItem={({ item }) => {
+        const kapakFoto = ilanKapakFotoUrl(item);
+        return (
         <TouchableOpacity
           style={styles.kart}
           onPress={() => navigation.navigate('IlanYonetim', { ilan: item })}
           activeOpacity={0.85}
         >
           <View style={styles.foto}>
-            <Ionicons name="camera-outline" size={24} color={colors.textMuted} />
+            {kapakFoto ? (
+              <Image
+                source={{ uri: kapakFoto, headers: ILAN_FOTO_HEADERS }}
+                style={styles.fotoImg}
+              />
+            ) : (
+              <Ionicons name="camera-outline" size={24} color={colors.textMuted} />
+            )}
           </View>
           <View style={styles.kartMetin}>
             <Text style={styles.kartBaslik} numberOfLines={1}>
@@ -117,7 +128,8 @@ export default function KullaniciIlanlarScreen({ navigation, route }) {
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
         </TouchableOpacity>
-      )}
+        );
+      }}
       contentContainerStyle={gorunen.length === 0 ? styles.bosListe : styles.doluListe}
     />
   );
@@ -161,7 +173,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
+  fotoImg: { width: 72, height: 72 },
   kartMetin: { flex: 1 },
   kartBaslik: { fontSize: 16, fontWeight: '700', color: colors.text },
   kartFiyat: { fontSize: 17, fontWeight: '800', color: colors.text, marginTop: 4 },

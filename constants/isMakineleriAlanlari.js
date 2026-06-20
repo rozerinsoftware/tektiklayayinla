@@ -72,12 +72,16 @@ export function isMakineleriBreadcrumb(secilenKategori) {
 }
 
 export function isMakineleriDetayNormalize(degerler, profil) {
-  return {
+  const detay = {
     makineTipi: profil.makineTipi,
     marka: profil.markaOtomatik || degerler.marka || profil.marka,
     ilanTuru: profil.ilanTuru,
     ...degerler,
   };
+  // Form `modelYili`/`takas` kaydeder; vitrin ve detay `yil`/`takasli` bekler.
+  if (degerler.modelYili && !detay.yil) detay.yil = degerler.modelYili;
+  if (degerler.takas && !detay.takasli) detay.takasli = degerler.takas;
+  return detay;
 }
 
 /** İlan ver akışında form ekranına geçilecek yaprak mı? */

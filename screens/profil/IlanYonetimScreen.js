@@ -9,12 +9,14 @@ import {
   Alert,
   ActionSheetIOS,
   Platform,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { deleteIlan, getIlanById } from '../../api';
 import { formatFiyat } from '../../constants/theme';
 import { ilanBitisTarihi, formatIlanTarih, ilanYayinda } from '../../utils/ilanYardimci';
 import { colors, spacing, radius } from '../../constants/theme';
+import { ilanKapakFotoUrl, ILAN_FOTO_HEADERS } from '../../utils/ilanFoto';
 
 export default function IlanYonetimScreen({ navigation, route }) {
   const [ilan, setIlan] = useState(route.params?.ilan);
@@ -39,6 +41,7 @@ export default function IlanYonetimScreen({ navigation, route }) {
 
   const yayinda = ilanYayinda(ilan);
   const bitis = ilanBitisTarihi(ilan);
+  const kapakFoto = ilanKapakFotoUrl(ilan);
 
   const aksiyonMenu = () => {
     const secenekler = yayinda
@@ -106,7 +109,14 @@ export default function IlanYonetimScreen({ navigation, route }) {
     <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
       <TouchableOpacity style={styles.ozetKart} onPress={() => navigation.navigate('IlanDetay', { ilan })}>
         <View style={styles.foto}>
-          <Ionicons name="camera-outline" size={28} color={colors.textMuted} />
+          {kapakFoto ? (
+            <Image
+              source={{ uri: kapakFoto, headers: ILAN_FOTO_HEADERS }}
+              style={styles.fotoImg}
+            />
+          ) : (
+            <Ionicons name="camera-outline" size={28} color={colors.textMuted} />
+          )}
         </View>
         <View style={styles.ozetMetin}>
           <Text style={styles.baslik}>{ilan.baslik}</Text>
@@ -191,7 +201,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
+  fotoImg: { width: 64, height: 64 },
   ozetMetin: { flex: 1 },
   baslik: { fontSize: 16, fontWeight: '700', color: colors.text },
   fiyat: { fontSize: 18, fontWeight: '800', color: colors.text, marginTop: 4 },
